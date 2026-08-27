@@ -2,12 +2,13 @@
    カード画像まで含めて最初の1回で全部キャッシュするので、
    2回目以降は電波が無くても起動する。
    絵柄やコードを更新したら CACHE の番号を上げること。 */
-const CACHE = "nandakoitsu-v2";
+const CACHE = "nanjanaimonja-v3";
 
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
+  "./mochiypop-subset.woff2",
   "./apple-touch-icon.png",
   "./icon-192.png",
   "./icon-512.png",
@@ -31,7 +32,7 @@ self.addEventListener("activate", (e) => {
 });
 
 /* キャッシュ優先。取れなかったら取りに行って、拾えたら次回用に貯める。
-   cors も貯めるのは、Google Fonts の書体を2回目以降オフラインでも使うため。 */
+   配信物は全部 install 時に入るので、ここは保険。 */
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   e.respondWith(
