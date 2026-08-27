@@ -1,0 +1,1336 @@
+<title>ナンジャナイモンジャ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ナンジャナイモンジャ">
+<meta name="theme-color" content="#123329">
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap">
+
+<style>
+/* ============================================================
+   ナンジャナイモンジャ — 名前をつけて早く呼ぶカードゲーム
+   単一ファイル・外部リクエストなし・オフライン動作
+   ============================================================ */
+
+:root{
+  /* 卓（フェルト）*/
+  --felt:      #123329;
+  --felt-2:    #1a4335;
+  --felt-deep: #0c241d;
+  --felt-line: #2c5b4a;
+
+  /* 紙とインク */
+  --paper:     #f6f0df;
+  --paper-2:   #e8dfc6;
+  --ink:       #14231d;
+  --ink-soft:  #4c6157;
+
+  /* アクセント */
+  --hot:       #ff5b3c;
+  --hot-deep:  #d13a1f;
+  --gold:      #f0b03a;
+  --dim:       #9fbcae;
+
+  --r-lg: 22px;
+  --r-md: 14px;
+  --r-sm: 9px;
+
+  --pad: clamp(14px, 4vw, 22px);
+
+  /* 見出し・ボタンは Mochiy Pop One。ロゴのマルデコと同じ「丸い看板文字」の系統で、
+     ひらがな・漢字も揃っているのでUI全体に使える。
+     読み込めなかったときは Hiragino Sans W9 に落ちるだけで崩れない。
+     変えたいときは下の1行の先頭だけ差し替える：
+       "Reggae One"     … やや個性的でこれより細い
+       "Dela Gothic One"… 一番太いが角ばる（丸いロゴとは喧嘩する）
+       "RocknRoll One"  … 丸いが細い */
+  --face-display: "Mochiy Pop One", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+  --face-body: -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+
+html,body{ height:100%; }
+
+body{
+  background: var(--felt);
+  color: var(--paper);
+  font-family: var(--face-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust:100%;
+  /* Reggae One は 400 のみ。合成ボールドで字が潰れるのを防ぐ
+     （フォールバックの Hiragino Sans は W9 の実ウェイトを持つので影響なし）*/
+  font-synthesis: none;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-user-select:none; user-select:none;
+  -webkit-tap-highlight-color: transparent;
+  overflow:hidden;
+}
+
+/* ---------- 卓（画面の器） ----------
+   実機では画面いっぱい。PCなど幅の広い画面ではスマホ比率の枠に収める。
+   .stage に transform がかかると中の position:fixed もこの枠を基準にするので、
+   シートやトーストも枠の外に飛び出さない。 */
+.stage{
+  position:fixed; inset:0; overflow:hidden;
+  background: var(--felt);
+}
+.stage::before{
+  content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(120% 80% at 50% 34%, #1c4738 0%, var(--felt) 46%, var(--felt-deep) 100%);
+}
+.stage::after{
+  content:""; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.22;
+  background-image:
+    linear-gradient(var(--felt-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--felt-line) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(90% 70% at 50% 40%, #000 0%, transparent 78%);
+  -webkit-mask-image: radial-gradient(90% 70% at 50% 40%, #000 0%, transparent 78%);
+}
+
+/* スマホ幅より広い画面だけ、スマホ比率（およそ 9:19.5）の枠にする */
+@media (min-width: 500px){
+  html,body{ background:#060d0b; }
+  .stage{
+    inset:auto; left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    width:  min(420px, calc((100dvh - 32px) * 0.462));
+    height: min(910px, calc(100dvh - 32px));
+    border-radius:36px;
+    box-shadow:0 30px 90px #000000b3, 0 0 0 1px #ffffff1a;
+  }
+}
+
+/* ---------- 画面切り替え ---------- */
+.screen{
+  position:absolute; inset:0; z-index:1;
+  display:none;
+  flex-direction:column;
+  padding: max(var(--pad), env(safe-area-inset-top)) var(--pad) max(var(--pad), env(safe-area-inset-bottom));
+}
+body[data-screen="title"]   #s-title,
+body[data-screen="count"]   #s-count,
+body[data-screen="names"]   #s-names,
+body[data-screen="game"]    #s-game,
+body[data-screen="result"]  #s-result{ display:flex; }
+
+/* ---------- 共通タイポ ---------- */
+.eyebrow{
+  font-size:11px; font-weight:700; letter-spacing:.22em;
+  color:var(--dim); text-transform:uppercase;
+}
+h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.01em; }
+.lede{ color:var(--dim); font-size:14px; line-height:1.7; }
+
+/* ---------- ボタン ---------- */
+.btn{
+  font-family:var(--face-display); font-weight:900;
+  border:none; border-radius:var(--r-md);
+  background:var(--paper); color:var(--ink);
+  padding:16px 22px; font-size:17px;
+  box-shadow:0 4px 0 #bfb599;
+  transition: transform .06s ease, box-shadow .06s ease;
+  cursor:pointer;
+}
+.btn:active{ transform:translateY(3px); box-shadow:0 1px 0 #bfb599; }
+.btn.hot{ background:var(--hot); color:#2a0d06; box-shadow:0 4px 0 var(--hot-deep); }
+.btn.hot:active{ box-shadow:0 1px 0 var(--hot-deep); }
+.btn.ghost{
+  background:transparent; color:var(--dim);
+  border:1.5px solid var(--felt-line); box-shadow:none; font-weight:700;
+  font-family:var(--face-body); font-size:14px; padding:12px 18px;
+}
+.btn.ghost:active{ transform:none; background:#ffffff0d; }
+.btn:focus-visible{ outline:3px solid var(--gold); outline-offset:3px; }
+
+/* ============================================================
+   1. タイトル
+   ============================================================ */
+#s-title{ justify-content:center; align-items:center; text-align:center; gap:0; }
+.mark{ width:min(38vw,158px); height:auto; margin-bottom:20px; filter:drop-shadow(0 10px 24px #0006); }
+
+/* ---------- ロゴ ----------
+   書体「マルデコ」の字形をパスに変換して埋め込んだもの（scratchpad/makelogo.py で生成）。
+   フォントファイルは同梱していないので、規約の再配布禁止に触れない。
+   ベクターなのでどの画面サイズでも輪郭が崩れない。 */
+.logo{ width:min(86vw,400px); margin:0 auto; }
+.logo svg{
+  display:block; width:100%; height:auto;
+  filter:drop-shadow(0 10px 22px #00000059);
+}
+.sub{
+  margin-top:14px; font-size:13px; color:var(--dim); line-height:1.8;
+  max-width:26em;
+}
+#s-title .btn.hot{ margin-top:34px; min-width:min(220px, 72vw); }
+.title-foot{ margin-top:16px; display:flex; gap:10px; }
+
+/* ルールのシート */
+.sheet{
+  position:fixed; inset:0; z-index:40; display:none;
+  background:#07171288; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  align-items:flex-end;
+}
+.sheet.open{ display:flex; }
+.sheet-inner{
+  width:100%; max-height:86%; overflow-y:auto;
+  background:var(--paper); color:var(--ink);
+  border-radius:26px 26px 0 0;
+  padding:26px var(--pad) max(26px, calc(env(safe-area-inset-bottom) + 18px));
+  animation: rise .22s cubic-bezier(.2,.9,.3,1);
+}
+@keyframes rise{ from{ transform:translateY(18px); opacity:.4 } }
+.sheet-inner h2{ font-size:22px; margin-bottom:4px; }
+.sheet-inner .k{ font-size:11px; letter-spacing:.2em; font-weight:700; color:#8b7f63; }
+.rules{ margin:18px 0 22px; display:flex; flex-direction:column; gap:14px; }
+.rule{ display:flex; gap:13px; align-items:flex-start; }
+.rule i{
+  flex:0 0 26px; height:26px; border-radius:50%;
+  background:var(--ink); color:var(--paper);
+  font-style:normal; font-weight:900; font-size:13px;
+  display:grid; place-items:center; margin-top:1px;
+}
+.rule p{ font-size:14px; line-height:1.7; }
+.rule b{ background:#ffd97a80; padding:0 3px; border-radius:3px; }
+.sheet-inner .btn{ width:100%; background:var(--ink); color:var(--paper); box-shadow:0 4px 0 #000; }
+
+/* ============================================================
+   2. 人数選択
+   ============================================================ */
+#s-count{ justify-content:center; gap:0; }
+.step-head{ text-align:center; margin-bottom:30px; }
+.step-head .eyebrow{ display:block; margin-bottom:10px; }
+.step-head h2{ font-size:clamp(24px,7vw,32px); }
+.count-grid{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+  max-width:420px; width:100%; margin:0 auto;
+}
+.count-cell{
+  aspect-ratio:1; border-radius:var(--r-md);
+  border:2px solid var(--felt-line); background:#ffffff08;
+  color:var(--paper); font-family:var(--face-display); font-weight:900;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  font-size:34px; line-height:1; cursor:pointer;
+  transition:transform .08s ease, background .12s ease, border-color .12s ease;
+}
+.count-cell span{ font-family:var(--face-body); font-size:11px; font-weight:700; color:var(--dim); }
+.count-cell[aria-pressed="true"]{
+  background:var(--gold); border-color:var(--gold); color:#3a2705;
+  transform:translateY(-2px);
+}
+.count-cell[aria-pressed="true"] span{ color:#3a2705cc; }
+.step-foot{ margin-top:30px; display:flex; gap:12px; justify-content:center; }
+
+/* ============================================================
+   3. 名前入力
+   ============================================================ */
+#s-names{ justify-content:flex-start; padding-top:max(28px, env(safe-area-inset-top)); }
+#s-names .step-head{ margin-bottom:22px; }
+.name-list{ display:flex; flex-direction:column; gap:10px; overflow-y:auto; flex:1; padding:2px; }
+.name-row{
+  display:flex; align-items:center; gap:12px;
+  background:#ffffff0a; border:1.5px solid var(--felt-line);
+  border-radius:var(--r-md); padding:10px 14px;
+}
+.chip{
+  flex:0 0 34px; height:34px; border-radius:50%;
+  display:grid; place-items:center;
+  font-family:var(--face-display); font-weight:900; font-size:15px; color:#12231c;
+}
+.name-row input{
+  flex:1; min-width:0; background:transparent; border:none; outline:none;
+  color:var(--paper); font-family:var(--face-display); font-weight:900; font-size:19px;
+  padding:6px 0;
+}
+.name-row input::placeholder{ color:#ffffff40; }
+.hint{ font-size:12px; color:var(--dim); margin-top:14px; text-align:center; line-height:1.7; }
+
+/* ============================================================
+   4. ゲーム
+   ============================================================ */
+#s-game{ padding-top:max(10px, env(safe-area-inset-top)); }
+
+/* -- 上部の細いバー -- */
+.hud{
+  display:flex; align-items:center; gap:8px;
+  flex:0 0 auto; height:40px;
+}
+.hud .meter{
+  display:flex; align-items:baseline; gap:5px;
+  font-size:11px; font-weight:700; color:var(--dim); letter-spacing:.06em;
+}
+.hud .meter b{
+  font-family:var(--face-display); font-weight:900; font-size:17px; color:var(--paper);
+  font-variant-numeric:tabular-nums;
+}
+.hud .sep{ width:1px; height:16px; background:var(--felt-line); }
+.hud .spacer{ flex:1; }
+.icon-btn{
+  height:32px; padding:0 12px; border-radius:16px;
+  background:#ffffff10; border:1px solid var(--felt-line); color:var(--dim);
+  font-size:12px; font-weight:700; font-family:var(--face-body);
+  display:inline-flex; align-items:center; gap:5px; cursor:pointer;
+}
+.icon-btn:active{ background:#ffffff20; }
+.icon-btn[disabled]{ opacity:.32; }
+
+/* -- 中央：カード置き場 -- */
+.table{
+  flex:1; position:relative;
+  display:grid; place-items:center;
+  min-height:0;
+  contain: layout paint;
+}
+
+/* 山札の影（カードを置く位置の目印）*/
+.slot{
+  position:absolute; height:min(100%,380px); aspect-ratio:3/4;
+  border-radius:18px; border:2px dashed #ffffff1f;
+}
+
+.cardbox{
+  position:relative; height:min(100%,380px); aspect-ratio:3/4;
+  transform-style:preserve-3d;
+  will-change:transform;
+}
+.cardbox.flip{ animation: flipIn .34s cubic-bezier(.16,.84,.28,1) both; }
+@keyframes flipIn{
+  0%{   transform: rotateY(180deg) scale(.94); }
+  100%{ transform: rotateY(0deg)   scale(1);   }
+}
+.cardbox.win{ animation: fly .3s cubic-bezier(.4,0,.7,.2) both; }
+@keyframes fly{
+  to{ transform: translateY(46vh) rotate(9deg) scale(.6); opacity:0; }
+}
+
+.face,.back{
+  position:absolute; inset:0; border-radius:18px;
+  backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  overflow:hidden;
+  box-shadow:0 18px 30px -12px #00000075, 0 2px 0 #ffffff1a inset;
+}
+.back{ transform: rotateY(180deg); }
+.face svg,.back svg{ display:block; width:100%; height:100%; }
+
+/* 場に溜まったカードの厚み */
+.pilestack{ position:absolute; inset:0; pointer-events:none; }
+.pilestack i{
+  position:absolute; height:min(100%,380px); aspect-ratio:3/4;
+  border-radius:18px; background:var(--paper-2);
+  border:1px solid #0003;
+  transform-origin:50% 60%;
+}
+
+/* 場が空のときの案内 */
+.empty-note{
+  position:absolute; text-align:center; color:#ffffff2e;
+  font-family:var(--face-display); font-weight:900; font-size:15px; letter-spacing:.16em;
+}
+
+/* -- カウントダウン -- */
+.countdown{
+  position:absolute; inset:0; z-index:12;
+  display:none; place-items:center;
+  background: radial-gradient(50% 40% at 50% 50%, #0c241dd9, #0c241dee);
+}
+.countdown.on{ display:grid; }
+.countdown b{
+  font-family:var(--face-display); font-weight:900;
+  font-size:clamp(120px,42vw,220px); line-height:.8;
+  color:var(--paper); font-variant-numeric:tabular-nums;
+  animation: tick .58s cubic-bezier(.2,.9,.3,1) both;
+}
+.countdown b.go{ font-size:clamp(52px,17vw,92px); color:var(--hot); letter-spacing:-.02em; }
+@keyframes tick{
+  0%{   transform:scale(1.7); opacity:0; }
+  22%{  transform:scale(1);   opacity:1; }
+  74%{  transform:scale(1);   opacity:1; }
+  100%{ transform:scale(.82); opacity:0; }
+}
+.countdown small{
+  position:absolute; bottom:16%; font-size:12px; letter-spacing:.2em;
+  color:var(--dim); font-weight:700;
+}
+
+/* -- 下部：操作エリア -- */
+.deck-area{ flex:0 0 auto; padding-top:14px; }
+
+[hidden]{ display:none !important; }
+
+/* ---------- 下段：メッセージ＋操作ボタン ----------
+   メッセージ欄の高さを固定してあるので、状態が変わっても
+   ボタンは1ミリも動かない。押し間違いが起きない。 */
+.msg{
+  min-height:84px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:6px; text-align:center;
+}
+.msg-top{
+  /* 11pxの小さいラベルに極太ポップ体は潰れるので、ここは本文書体の太字 */
+  font-family:var(--face-body); font-weight:700;
+  font-size:11px; letter-spacing:.18em; color:var(--dim);
+}
+.msg-top.is-new{ color:var(--gold); }
+.msg-top.is-seen{ color:var(--hot); }
+.msg-main{
+  font-family:var(--face-display); font-weight:900;
+  font-size:clamp(22px,6.6vw,30px); line-height:1.2;
+  display:flex; align-items:center; justify-content:center; gap:11px;
+}
+.msg-main i{ width:14px; height:14px; border-radius:50%; display:block; flex:0 0 auto; }
+#btn-action{ width:100%; font-size:20px; padding:20px; }
+
+/* 初出／既出のラベル（選択画面の見出し） */
+.tag{
+  text-align:center; font-family:var(--face-display); font-weight:900;
+  font-size:11px; letter-spacing:.18em; margin-bottom:5px;
+}
+.tag.is-new{ color:var(--gold); }
+.tag.is-seen{ color:var(--hot); }
+
+/* ---------- プレイヤー選択（別レイヤー） ----------
+   めくった直後は札を大きく見せたいので、選ぶのは「すすむ」を押してから。
+   人数が増えてもここが縦スクロールするだけで済む。 */
+.picker{
+  position:absolute; inset:0; z-index:30; display:none;
+  flex-direction:column;
+  padding: max(var(--pad), env(safe-area-inset-top)) var(--pad)
+           max(var(--pad), calc(env(safe-area-inset-bottom) + 4px));
+  background: linear-gradient(#0e2620f7, #0c211bfc);
+  animation: pkIn .16s ease-out;
+}
+.picker.on{ display:flex; }
+@keyframes pkIn{ from{ opacity:0 } }
+.pk-top{ flex:0 0 auto; text-align:center; padding-bottom:16px; }
+.pk-title{
+  font-family:var(--face-display); font-weight:900;
+  font-size:clamp(22px,6.8vw,31px); line-height:1.2;
+}
+.pk-sub{ font-size:12px; font-weight:700; color:var(--dim); margin-top:6px; }
+.picker .claim-grid{
+  flex:1; min-height:0; overflow-y:auto;
+  grid-template-columns:repeat(2,1fr); padding:2px;
+  -webkit-overflow-scrolling:touch;
+  /* 収まるときは中央、あふれたら上から（safe が効かない環境は start のまま） */
+  align-content:start;
+  align-content:safe center;
+}
+.picker .claim{ min-height:76px; font-size:18px; }
+.pk-foot{
+  flex:0 0 auto; display:flex; gap:8px; flex-wrap:wrap;
+  justify-content:center; padding-top:14px;
+}
+
+.claim-grid{ display:grid; gap:8px; grid-template-columns:repeat(2,1fr); }
+.claim{
+  border:none; border-radius:var(--r-sm); cursor:pointer;
+  padding:14px 6px 12px; min-height:60px;
+  font-family:var(--face-display); font-weight:900; font-size:15px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+  color:#12231c; line-height:1.15;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  box-shadow:0 3px 0 #00000040;
+  transition:transform .05s ease, box-shadow .05s ease;
+}
+.claim:active{ transform:translateY(2px); box-shadow:0 1px 0 #00000040; }
+.claim em{
+  font-family:var(--face-body); font-style:normal;
+  font-size:10px; font-weight:700; letter-spacing:.08em; opacity:.62;
+}
+
+/* ============================================================
+   得点オーバーレイ / トースト
+   ============================================================ */
+.scores{ position:fixed; inset:0; z-index:45; display:none; }
+.scores.open{ display:block; }
+.scores .veil{ position:absolute; inset:0; background:#06140fd9; backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); }
+.scores .panel{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(92%,400px);
+  background:var(--paper); color:var(--ink); border-radius:20px;
+  padding:24px 22px; animation:pop .18s cubic-bezier(.2,.9,.3,1);
+}
+@keyframes pop{ from{ transform:translate(-50%,-46%) scale(.96); opacity:.4 } }
+.scores h2{ font-size:19px; margin-bottom:2px; }
+.scores .k{ font-size:11px; letter-spacing:.2em; font-weight:700; color:#8b7f63; }
+.srow{
+  display:flex; align-items:center; gap:11px; padding:11px 0;
+  border-bottom:1px solid #0000000f;
+}
+.srow:last-of-type{ border-bottom:none; }
+.srow .nm{ flex:1; font-weight:700; font-size:15px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.srow .bar{ flex:0 0 62px; height:7px; border-radius:4px; background:#00000012; overflow:hidden; }
+.srow .bar i{ display:block; height:100%; border-radius:4px; }
+.srow .n{
+  flex:0 0 auto; font-family:var(--face-display); font-weight:900; font-size:21px;
+  font-variant-numeric:tabular-nums; min-width:2.2em; text-align:right;
+}
+.srow .n u{ text-decoration:none; font-size:11px; font-weight:700; font-family:var(--face-body); color:#8b7f63; margin-left:2px; }
+.scores .btn{ width:100%; margin-top:18px; background:var(--ink); color:var(--paper); box-shadow:0 4px 0 #000; }
+
+.toast{
+  position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom) + 96px);
+  transform:translateX(-50%) translateY(10px);
+  z-index:60; pointer-events:none; opacity:0;
+  background:var(--ink); color:var(--paper);
+  padding:11px 18px; border-radius:22px; font-size:13px; font-weight:700;
+  box-shadow:0 10px 24px #00000059; white-space:nowrap;
+  transition:opacity .16s ease, transform .16s ease;
+}
+.toast.on{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ============================================================
+   5. 結果
+   ============================================================ */
+#s-result{ justify-content:center; }
+#s-result .step-head{ margin-bottom:24px; }
+.podium{
+  display:flex; flex-direction:column; gap:9px;
+  max-width:440px; width:100%; margin:0 auto;
+  overflow-y:auto;
+}
+.prow{
+  display:flex; align-items:center; gap:13px;
+  background:#ffffff0a; border:1.5px solid var(--felt-line);
+  border-radius:var(--r-md); padding:13px 15px;
+}
+.prow.top{ background:var(--gold); border-color:var(--gold); color:#3a2705; }
+.prow .rk{
+  flex:0 0 26px; font-family:var(--face-display); font-weight:900; font-size:16px;
+  color:var(--dim); font-variant-numeric:tabular-nums;
+}
+.prow.top .rk{ color:#3a270599; }
+.prow .nm{ flex:1; font-family:var(--face-display); font-weight:900; font-size:19px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.prow .n{ font-family:var(--face-display); font-weight:900; font-size:24px; font-variant-numeric:tabular-nums; }
+.prow .n u{ text-decoration:none; font-size:11px; font-family:var(--face-body); opacity:.6; margin-left:2px; }
+#s-result .step-foot{ flex-direction:column; }
+#s-result .step-foot .btn{ width:100%; max-width:440px; margin:0 auto; }
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+}
+</style>
+
+<div class="stage">
+
+<!-- ============ 1. タイトル ============ -->
+<section class="screen" id="s-title">
+  <svg class="mark" viewBox="0 0 200 150" aria-hidden="true">
+    <g transform="rotate(-9 100 78)">
+      <rect x="34" y="20" width="132" height="112" rx="14" fill="#0c241d" opacity=".5"/>
+    </g>
+    <g transform="rotate(-3 100 76)">
+      <rect x="36" y="16" width="130" height="112" rx="14" fill="#e8dfc6"/>
+    </g>
+    <g transform="rotate(5 100 74)">
+      <rect x="38" y="12" width="128" height="112" rx="14" fill="#f6f0df" stroke="#14231d" stroke-width="3"/>
+      <g transform="translate(102 68)">
+        <ellipse cx="0" cy="-2" rx="34" ry="31" fill="#ff5b3c" opacity=".55"/>
+        <ellipse cx="4" cy="2" rx="34" ry="31" fill="#ff5b3c"/>
+        <ellipse cx="4" cy="2" rx="34" ry="31" fill="none" stroke="#14231d" stroke-width="3"/>
+        <circle cx="-8" cy="-3" r="8.5" fill="#f6f0df" stroke="#14231d" stroke-width="2.4"/>
+        <circle cx="16" cy="-3" r="8.5" fill="#f6f0df" stroke="#14231d" stroke-width="2.4"/>
+        <circle cx="-6" cy="-1" r="3.6" fill="#14231d"/>
+        <circle cx="18" cy="-1" r="3.6" fill="#14231d"/>
+        <path d="M-6 16 q10 9 20 0" fill="none" stroke="#14231d" stroke-width="3" stroke-linecap="round"/>
+        <path d="M-14 31 v14 M4 33 v14 M22 31 v14" stroke="#14231d" stroke-width="4.5" stroke-linecap="round"/>
+        <path d="M4 -30 q1 -13 9 -17" fill="none" stroke="#14231d" stroke-width="3.4" stroke-linecap="round"/>
+        <circle cx="15" cy="-49" r="5.6" fill="#f0b03a" stroke="#14231d" stroke-width="2.4"/>
+      </g>
+    </g>
+  </svg>
+  <p class="eyebrow">名前をつけて 早く呼ぶ カードゲーム</p>
+  <h1 class="logo"><!--LOGO-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-250.0 -530.0 6250.0 2820.0" role="img" aria-label="ナンジャナイモンジャ">
+<title>ナンジャナイモンジャ</title>
+<!-- 書体：マルデコ（制作者 nio / https://x.com/nioin_design）の字形をパス化して使用。
+     フォントファイルは同梱していない。 -->
+  <!-- 下の影 -->
+  <g fill="none" stroke="#0a1c16" stroke-width="300" stroke-linejoin="round"
+     stroke-linecap="round" transform="translate(0 50)">
+    <g transform="rotate(-5 500.0 480.0) translate(0.0 810.0) scale(1 -1)"><path d="M864 481V582H738C741 632 742 685 742 737H439C439 690 440 638 439 582H138V368C221 406 325 431 435 448C423 278 384 115 262 52C262 88 235 103 211 103C183 103 160 80 160 52C160 25 186 4 220 2C239 0 257 0 275 1C582 12 692 217 727 476C777 479 821 480 864 481Z"/></g>
+    <g transform="rotate(3 1450.0 480.0) translate(950.0 792.0) scale(1 -1)"><path d="M455 356V582H125V471C228 445 372 394 455 356ZM247 0C294 -5 342 -5 382 -2C816 30 882 274 882 639L574 643C574 306 523 136 286 47C286 81 262 100 237 100C209 100 187 77 187 49C187 23 210 4 247 0Z"/></g>
+    <g transform="rotate(-2 2400.0 480.0) translate(1900.0 805.0) scale(1 -1)"><path d="M725 821V700H467C467 355 440 83 248 52C251 89 225 114 194 114C165 114 141 90 141 60C141 31 163 15 194 9C237 0 277 1 310 1C591 1 792 212 819 605L842 607L813 829ZM853 830 873 609 988 619 942 838ZM111 344H408V444H111ZM111 701V503H408C409 545 409 568 408 603C315 623 188 666 111 701Z"/></g>
+    <g transform="rotate(4 3350.0 480.0) translate(2850.0 796.0) scale(1 -1)"><path d="M589 159C757 154 802 324 787 452L444 411L423 527L257 497C263 465 270 428 278 392L190 381L199 306L296 318C330 184 378 49 440 -14L519 0L458 337L644 359C652 303 648 255 626 220C619 238 599 250 578 247C554 244 537 223 539 198C543 173 564 160 589 159Z"/></g>
+    <g transform="rotate(-4 4300.0 480.0) translate(3800.0 809.0) scale(1 -1)"><path d="M864 481V582H738C741 632 742 685 742 737H439C439 690 440 638 439 582H138V368C221 406 325 431 435 448C423 278 384 115 262 52C262 88 235 103 211 103C183 103 160 80 160 52C160 25 186 4 220 2C239 0 257 0 275 1C582 12 692 217 727 476C777 479 821 480 864 481Z"/></g>
+    <g transform="rotate(3 5250.0 480.0) translate(4750.0 794.0) scale(1 -1)"><path d="M448 0H693V435C770 490 832 602 832 708H523C523 568 423 431 228 361C228 394 212 419 177 419C148 419 126 399 126 370C126 341 150 321 179 314C265 293 426 314 526 354C482 253 450 119 448 0Z"/></g>
+    <g transform="rotate(3 1450.0 1600.0) translate(950.0 1915.0) scale(1 -1)"><path d="M666 4C711 1 759 0 813 8C841 13 862 32 862 58C862 86 839 107 813 107C785 107 764 86 764 58V53C651 60 547 134 547 353H845V442H547V527H816V735C541 735 328 657 164 586V527H249V442H141V353H253C274 133 386 26 666 4Z"/></g>
+    <g transform="rotate(-4 2400.0 1600.0) translate(1900.0 1928.0) scale(1 -1)"><path d="M455 356V582H125V471C228 445 372 394 455 356ZM247 0C294 -5 342 -5 382 -2C816 30 882 274 882 639L574 643C574 306 523 136 286 47C286 81 262 100 237 100C209 100 187 77 187 49C187 23 210 4 247 0Z"/></g>
+    <g transform="rotate(2 3350.0 1600.0) translate(2850.0 1912.0) scale(1 -1)"><path d="M725 821V700H467C467 355 440 83 248 52C251 89 225 114 194 114C165 114 141 90 141 60C141 31 163 15 194 9C237 0 277 1 310 1C591 1 792 212 819 605L842 607L813 829ZM853 830 873 609 988 619 942 838ZM111 344H408V444H111ZM111 701V503H408C409 545 409 568 408 603C315 623 188 666 111 701Z"/></g>
+    <g transform="rotate(-3 4300.0 1600.0) translate(3800.0 1924.0) scale(1 -1)"><path d="M589 159C757 154 802 324 787 452L444 411L423 527L257 497C263 465 270 428 278 392L190 381L199 306L296 318C330 184 378 49 440 -14L519 0L458 337L644 359C652 303 648 255 626 220C619 238 599 250 578 247C554 244 537 223 539 198C543 173 564 160 589 159Z"/></g>
+  </g>
+  <!-- 濃い縁取り -->
+  <g fill="none" stroke="#14231d" stroke-width="300" stroke-linejoin="round" stroke-linecap="round">
+    <g transform="rotate(-5 500.0 480.0) translate(0.0 810.0) scale(1 -1)"><path d="M864 481V582H738C741 632 742 685 742 737H439C439 690 440 638 439 582H138V368C221 406 325 431 435 448C423 278 384 115 262 52C262 88 235 103 211 103C183 103 160 80 160 52C160 25 186 4 220 2C239 0 257 0 275 1C582 12 692 217 727 476C777 479 821 480 864 481Z"/></g>
+    <g transform="rotate(3 1450.0 480.0) translate(950.0 792.0) scale(1 -1)"><path d="M455 356V582H125V471C228 445 372 394 455 356ZM247 0C294 -5 342 -5 382 -2C816 30 882 274 882 639L574 643C574 306 523 136 286 47C286 81 262 100 237 100C209 100 187 77 187 49C187 23 210 4 247 0Z"/></g>
+    <g transform="rotate(-2 2400.0 480.0) translate(1900.0 805.0) scale(1 -1)"><path d="M725 821V700H467C467 355 440 83 248 52C251 89 225 114 194 114C165 114 141 90 141 60C141 31 163 15 194 9C237 0 277 1 310 1C591 1 792 212 819 605L842 607L813 829ZM853 830 873 609 988 619 942 838ZM111 344H408V444H111ZM111 701V503H408C409 545 409 568 408 603C315 623 188 666 111 701Z"/></g>
+    <g transform="rotate(4 3350.0 480.0) translate(2850.0 796.0) scale(1 -1)"><path d="M589 159C757 154 802 324 787 452L444 411L423 527L257 497C263 465 270 428 278 392L190 381L199 306L296 318C330 184 378 49 440 -14L519 0L458 337L644 359C652 303 648 255 626 220C619 238 599 250 578 247C554 244 537 223 539 198C543 173 564 160 589 159Z"/></g>
+    <g transform="rotate(-4 4300.0 480.0) translate(3800.0 809.0) scale(1 -1)"><path d="M864 481V582H738C741 632 742 685 742 737H439C439 690 440 638 439 582H138V368C221 406 325 431 435 448C423 278 384 115 262 52C262 88 235 103 211 103C183 103 160 80 160 52C160 25 186 4 220 2C239 0 257 0 275 1C582 12 692 217 727 476C777 479 821 480 864 481Z"/></g>
+    <g transform="rotate(3 5250.0 480.0) translate(4750.0 794.0) scale(1 -1)"><path d="M448 0H693V435C770 490 832 602 832 708H523C523 568 423 431 228 361C228 394 212 419 177 419C148 419 126 399 126 370C126 341 150 321 179 314C265 293 426 314 526 354C482 253 450 119 448 0Z"/></g>
+    <g transform="rotate(3 1450.0 1600.0) translate(950.0 1915.0) scale(1 -1)"><path d="M666 4C711 1 759 0 813 8C841 13 862 32 862 58C862 86 839 107 813 107C785 107 764 86 764 58V53C651 60 547 134 547 353H845V442H547V527H816V735C541 735 328 657 164 586V527H249V442H141V353H253C274 133 386 26 666 4Z"/></g>
+    <g transform="rotate(-4 2400.0 1600.0) translate(1900.0 1928.0) scale(1 -1)"><path d="M455 356V582H125V471C228 445 372 394 455 356ZM247 0C294 -5 342 -5 382 -2C816 30 882 274 882 639L574 643C574 306 523 136 286 47C286 81 262 100 237 100C209 100 187 77 187 49C187 23 210 4 247 0Z"/></g>
+    <g transform="rotate(2 3350.0 1600.0) translate(2850.0 1912.0) scale(1 -1)"><path d="M725 821V700H467C467 355 440 83 248 52C251 89 225 114 194 114C165 114 141 90 141 60C141 31 163 15 194 9C237 0 277 1 310 1C591 1 792 212 819 605L842 607L813 829ZM853 830 873 609 988 619 942 838ZM111 344H408V444H111ZM111 701V503H408C409 545 409 568 408 603C315 623 188 666 111 701Z"/></g>
+    <g transform="rotate(-3 4300.0 1600.0) translate(3800.0 1924.0) scale(1 -1)"><path d="M589 159C757 154 802 324 787 452L444 411L423 527L257 497C263 465 270 428 278 392L190 381L199 306L296 318C330 184 378 49 440 -14L519 0L458 337L644 359C652 303 648 255 626 220C619 238 599 250 578 247C554 244 537 223 539 198C543 173 564 160 589 159Z"/></g>
+  </g>
+  <!-- 白抜きの本体 -->
+  <g fill="#f6f0df">
+    <g transform="rotate(-5 500.0 480.0) translate(0.0 810.0) scale(1 -1)"><path d="M864 481V582H738C741 632 742 685 742 737H439C439 690 440 638 439 582H138V368C221 406 325 431 435 448C423 278 384 115 262 52C262 88 235 103 211 103C183 103 160 80 160 52C160 25 186 4 220 2C239 0 257 0 275 1C582 12 692 217 727 476C777 479 821 480 864 481Z"/></g>
+    <g transform="rotate(3 1450.0 480.0) translate(950.0 792.0) scale(1 -1)"><path d="M455 356V582H125V471C228 445 372 394 455 356ZM247 0C294 -5 342 -5 382 -2C816 30 882 274 882 639L574 643C574 306 523 136 286 47C286 81 262 100 237 100C209 100 187 77 187 49C187 23 210 4 247 0Z"/></g>
+    <g transform="rotate(-2 2400.0 480.0) translate(1900.0 805.0) scale(1 -1)"><path d="M725 821V700H467C467 355 440 83 248 52C251 89 225 114 194 114C165 114 141 90 141 60C141 31 163 15 194 9C237 0 277 1 310 1C591 1 792 212 819 605L842 607L813 829ZM853 830 873 609 988 619 942 838ZM111 344H408V444H111ZM111 701V503H408C409 545 409 568 408 603C315 623 188 666 111 701Z"/></g>
+    <g transform="rotate(4 3350.0 480.0) translate(2850.0 796.0) scale(1 -1)"><path d="M589 159C757 154 802 324 787 452L444 411L423 527L257 497C263 465 270 428 278 392L190 381L199 306L296 318C330 184 378 49 440 -14L519 0L458 337L644 359C652 303 648 255 626 220C619 238 599 250 578 247C554 244 537 223 539 198C543 173 564 160 589 159Z"/></g>
+    <g transform="rotate(-4 4300.0 480.0) translate(3800.0 809.0) scale(1 -1)"><path d="M864 481V582H738C741 632 742 685 742 737H439C439 690 440 638 439 582H138V368C221 406 325 431 435 448C423 278 384 115 262 52C262 88 235 103 211 103C183 103 160 80 160 52C160 25 186 4 220 2C239 0 257 0 275 1C582 12 692 217 727 476C777 479 821 480 864 481Z"/></g>
+    <g transform="rotate(3 5250.0 480.0) translate(4750.0 794.0) scale(1 -1)"><path d="M448 0H693V435C770 490 832 602 832 708H523C523 568 423 431 228 361C228 394 212 419 177 419C148 419 126 399 126 370C126 341 150 321 179 314C265 293 426 314 526 354C482 253 450 119 448 0Z"/></g>
+    <g transform="rotate(3 1450.0 1600.0) translate(950.0 1915.0) scale(1 -1)"><path d="M666 4C711 1 759 0 813 8C841 13 862 32 862 58C862 86 839 107 813 107C785 107 764 86 764 58V53C651 60 547 134 547 353H845V442H547V527H816V735C541 735 328 657 164 586V527H249V442H141V353H253C274 133 386 26 666 4Z"/></g>
+    <g transform="rotate(-4 2400.0 1600.0) translate(1900.0 1928.0) scale(1 -1)"><path d="M455 356V582H125V471C228 445 372 394 455 356ZM247 0C294 -5 342 -5 382 -2C816 30 882 274 882 639L574 643C574 306 523 136 286 47C286 81 262 100 237 100C209 100 187 77 187 49C187 23 210 4 247 0Z"/></g>
+    <g transform="rotate(2 3350.0 1600.0) translate(2850.0 1912.0) scale(1 -1)"><path d="M725 821V700H467C467 355 440 83 248 52C251 89 225 114 194 114C165 114 141 90 141 60C141 31 163 15 194 9C237 0 277 1 310 1C591 1 792 212 819 605L842 607L813 829ZM853 830 873 609 988 619 942 838ZM111 344H408V444H111ZM111 701V503H408C409 545 409 568 408 603C315 623 188 666 111 701Z"/></g>
+    <g transform="rotate(-3 4300.0 1600.0) translate(3800.0 1924.0) scale(1 -1)"><path d="M589 159C757 154 802 324 787 452L444 411L423 527L257 497C263 465 270 428 278 392L190 381L199 306L296 318C330 184 378 49 440 -14L519 0L458 337L644 359C652 303 648 255 626 220C619 238 599 250 578 247C554 244 537 223 539 198C543 173 564 160 589 159Z"/></g>
+  </g>
+</svg>
+  <!--/LOGO--></h1>
+  <p class="sub">へんな生き物に名前をつけて、二度目に出たら早く呼んだ人が総取り。スマホ1台をみんなで囲んで遊びます。</p>
+  <button class="btn hot" data-go="count">はじめる</button>
+  <div class="title-foot">
+    <button class="btn ghost" data-sheet="open">あそびかた</button>
+    <button class="btn ghost" id="sound-toggle" aria-pressed="true">音 ON</button>
+  </div>
+</section>
+
+<!-- あそびかたシート -->
+<div class="sheet" id="sheet">
+  <div class="sheet-inner">
+    <p class="k">HOW TO PLAY</p>
+    <h2>あそびかた</h2>
+    <div class="rules">
+      <div class="rule"><i>1</i><p>スマホをみんなの真ん中に置きます。手番は自動で回るので、画面の人が<b>めくる</b>を押してください。<b>3・2・1</b>のあとにカードが表になります。</p></div>
+      <div class="rule"><i>2</i><p><b>はじめて出た顔</b>のときは、めくった人があだ名をつけます。全員で覚えてください。カードは場に積まれたままです。</p></div>
+      <div class="rule"><i>3</i><p><b>前に出た顔</b>のときは、そのあだ名を早く叫んだ人の勝ち。<b>すすむ</b>を押して、勝った人の名前を選ぶと<b>積まれたカードを全部</b>もらえます。</p></div>
+      <div class="rule"><i>4</i><p>誰も思い出せなかったときは<b>だれも言えなかった</b>。カードは場に積まれたまま、次の人に進みます。</p></div>
+      <div class="rule"><i>5</i><p>山札がなくなったら終了。<b>枚数が一番多い人の勝ち</b>です。枚数は普段かくれているので、確認したいときは上の<b>枚数</b>を押してください。</p></div>
+    </div>
+    <button class="btn" data-sheet="close">とじる</button>
+  </div>
+</div>
+
+<!-- ============ 2. 人数 ============ -->
+<section class="screen" id="s-count">
+  <div class="step-head">
+    <span class="eyebrow">STEP 1</span>
+    <h2>何人であそぶ？</h2>
+  </div>
+  <div class="count-grid" id="count-grid"></div>
+  <div class="step-foot">
+    <button class="btn ghost" data-go="title">もどる</button>
+    <button class="btn hot" id="to-names">なまえを入れる</button>
+  </div>
+</section>
+
+<!-- ============ 3. 名前 ============ -->
+<section class="screen" id="s-names">
+  <div class="step-head">
+    <span class="eyebrow">STEP 2</span>
+    <h2>なまえを入れる</h2>
+  </div>
+  <div class="name-list" id="name-list"></div>
+  <p class="hint">この順番でスマホを回します。空欄のままでも大丈夫です。</p>
+  <div class="step-foot">
+    <button class="btn ghost" data-go="count">もどる</button>
+    <button class="btn hot" id="start-game">ゲーム開始</button>
+  </div>
+</section>
+
+<!-- ============ 4. ゲーム ============ -->
+<section class="screen" id="s-game">
+  <div class="hud">
+    <div class="meter">山札 <b id="m-deck">60</b></div>
+    <div class="sep"></div>
+    <div class="meter">場 <b id="m-pile">0</b></div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="btn-undo" disabled>↩ もどす</button>
+    <button class="icon-btn" id="btn-scores">枚数</button>
+  </div>
+
+  <div class="table" id="table">
+    <div class="slot"></div>
+    <div class="empty-note" id="empty-note">ここにカードが出ます</div>
+    <div class="pilestack" id="pilestack"></div>
+    <div class="cardbox" id="cardbox" style="display:none">
+      <div class="face" id="card-face"></div>
+      <div class="back" id="card-back"></div>
+    </div>
+    <div class="countdown" id="countdown"><b>3</b><small>てを どけて</small></div>
+  </div>
+
+  <!-- プレイヤー選択。何人でも縦スクロールで収まる -->
+  <div class="picker" id="picker">
+    <div class="pk-top">
+      <p class="tag is-seen" id="pk-tag">まえに 出た顔！</p>
+      <h2 class="pk-title" id="pk-title">だれが とった？</h2>
+      <p class="pk-sub" id="pk-sub"></p>
+    </div>
+    <div class="claim-grid" id="claim-grid"></div>
+    <div class="pk-foot">
+      <button class="icon-btn" id="btn-none">だれも 言えなかった</button>
+      <button class="icon-btn" id="btn-back">もどる</button>
+    </div>
+  </div>
+
+  <div class="deck-area">
+    <div class="msg">
+      <p class="msg-top" id="msg-top">つぎの ばん</p>
+      <p class="msg-main" id="msg-main">P1</p>
+    </div>
+    <button class="btn hot" id="btn-action">めくる</button>
+  </div>
+</section>
+
+<!-- 得点オーバーレイ -->
+<div class="scores" id="scores">
+  <div class="veil" data-scores="close"></div>
+  <div class="panel">
+    <p class="k">CARDS HELD</p>
+    <h2>いま持っている枚数</h2>
+    <div id="score-list"></div>
+    <button class="btn" data-scores="close">とじる</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ 5. 結果 ============ -->
+<section class="screen" id="s-result">
+  <div class="step-head">
+    <span class="eyebrow">RESULT</span>
+    <h2 id="result-head">しゅうりょう！</h2>
+  </div>
+  <div class="podium" id="podium"></div>
+  <div class="step-foot">
+    <button class="btn hot" id="again">同じメンバーでもう一回</button>
+    <button class="btn ghost" data-go="title">タイトルへ</button>
+  </div>
+</section>
+
+</div><!-- /.stage -->
+
+<script>
+"use strict";
+
+/* ============================================================
+   定数
+   ============================================================ */
+const KINDS = 12;            // キャラクター種類（本家どおり）
+const COPIES = 5;            // 1種あたりの枚数 → 12 x 5 = 60枚
+const MAX_UNDO = 24;
+
+// プレイヤー色と人数の範囲。本家は2〜6人だが、選択画面が縦スクロールするので上限を広げてある
+const PCOL = ["#ff5b3c", "#f0b03a", "#4dc3b0", "#e4569a",
+              "#9b8cf0", "#8fc74f", "#6ad3e8", "#c98b6b"];
+const MIN_P = 2, MAX_P = 8;
+
+/* デモ用カードのパレット。
+   色の系統をわざと近づけて（黄3・緑4・青2・桃2・橙1）、色だけでは決めきれない
+   ＝よく見ないと言い間違える、という本家の感覚を数字カードでも再現する。
+   body=胴の色 / ink=番号の色 / leg=脚の色 / iris=目の色 */
+const KIND_STYLE = [
+  { body:"#f5d547", ink:"#7a6410", leg:"#6fc0e8", iris:"#3e9a5f" },
+  { body:"#efa92e", ink:"#7a5308", leg:"#7fbf4d", iris:"#4a8fd4" },
+  { body:"#b9d94e", ink:"#5c6b16", leg:"#ef6248", iris:"#4a8fd4" },
+  { body:"#7fbf4d", ink:"#3d6b1c", leg:"#4a8fd4", iris:"#8a3d13" },
+  { body:"#3e9a5f", ink:"#1e5230", leg:"#9b7fd4", iris:"#f5d547" },
+  { body:"#4cbfa6", ink:"#1f6155", leg:"#f2803c", iris:"#4a8fd4" },
+  { body:"#6fc0e8", ink:"#2a5f7d", leg:"#b39ddb", iris:"#3e9a5f" },
+  { body:"#4a8fd4", ink:"#1e4571", leg:"#f5d547", iris:"#f2803c" },
+  { body:"#f08ab8", ink:"#8a3a5e", leg:"#4cbfa6", iris:"#3e9a5f" },
+  { body:"#d9459a", ink:"#6e1a4c", leg:"#f2803c", iris:"#4cbfa6" },
+  { body:"#f2803c", ink:"#8a3d13", leg:"#7a63d6", iris:"#3e9a5f" },
+  { body:"#ef6248", ink:"#8a2418", leg:"#4a8fd4", iris:"#4cbfa6" }
+];
+
+/* 参考画像にあった3種の下地模様をコードで再現。
+   AIに背景まで描かせると12枚で太さ・間隔・色がズレるので、ここで描いて統一する。 */
+const PATTERNS = [
+  // 0: ゆらゆらした縦の波線
+  `<pattern id="pt" width="42" height="40" patternUnits="userSpaceOnUse">
+     <g fill="none" stroke-width="2.4" stroke-linecap="round">
+       <path d="M7 0q6 10 0 20t0 20"  stroke="#cfe6a8"/>
+       <path d="M21 0q-6 10 0 20t0 20" stroke="#f7e7a3"/>
+       <path d="M35 0q6 10 0 20t0 20"  stroke="#f9cede"/>
+     </g>
+   </pattern>`,
+  // 1: まっすぐな縦縞
+  `<pattern id="pt" width="30" height="20" patternUnits="userSpaceOnUse">
+     <g stroke-width="3.4" stroke-linecap="round">
+       <path d="M6 0V20"  stroke="#cfe6a8"/>
+       <path d="M16 0V20" stroke="#f7e7a3"/>
+       <path d="M25 0V20" stroke="#c9e4f5"/>
+     </g>
+   </pattern>`,
+  // 2: 丸・輪・きらきらのコンフェッティ
+  `<pattern id="pt" width="56" height="56" patternUnits="userSpaceOnUse">
+     <circle cx="10" cy="12" r="3.4" fill="#f9cede"/>
+     <circle cx="41" cy="34" r="3.4" fill="#cfe6a8"/>
+     <circle cx="30" cy="6"  r="5"   fill="none" stroke="#c9e4f5" stroke-width="1.8"/>
+     <circle cx="6"  cy="42" r="6"   fill="none" stroke="#f9cede" stroke-width="1.8"/>
+     <g stroke="#f7e7a3" stroke-width="2" stroke-linecap="round">
+       <path d="M46 8v9M41.5 12.5h9"/>
+     </g>
+     <g stroke="#cfe6a8" stroke-width="2" stroke-linecap="round">
+       <path d="M22 44v8M18 48h8"/>
+     </g>
+   </pattern>`
+];
+
+/* 胴のかたち。色が近い相手と形で差がつくように4種を巡回させる */
+const BODIES = [
+  '<ellipse cx="105" cy="120" rx="58" ry="54"/>',
+  '<ellipse cx="105" cy="114" rx="46" ry="62"/>',
+  '<ellipse cx="105" cy="126" rx="68" ry="46"/>',
+  '<path d="M105 56c-30 0-46 22-50 44-3 18-8 24-8 34 0 22 26 38 58 38s58-16 58-38c0-10-5-16-8-34-4-22-20-44-50-44z"/>'
+];
+
+/* ============================================================
+   カード面の描画
+   ------------------------------------------------------------
+   ★ここだけ差し替えれば絵柄版になります。
+     renderFace(kindId) が 0〜11 を受け取って SVG 文字列を返す、
+     という約束だけ守れば他のコードは触らなくて大丈夫です。
+   ============================================================ */
+/* 絵柄。cards/01.jpg … 12.jpg が 3:4 のカード一枚まるごと（下地の模様も画像に入っている）。
+   character/ の原本から sips で 1080px / JPEG80 に落としたもの。
+   差し替えるときは cards/ の中身を同じ名前で置き換えるだけ。
+   絵柄を使わずコード描画のプレースホルダに戻したいときは null にする。 */
+const ART_DIR = "cards";
+
+/* 配布用のビルドでは、ここに12枚を data URI で焼き込んで1ファイルで完結させる。
+   ローカルで触るときは null のままで cards/ を読む。 */
+const ART_DATA = null;
+
+function artHref(n){
+  const key = String(n).padStart(2, "0");
+  return (ART_DATA && ART_DATA[key]) || `${ART_DIR}/${key}.jpg`;
+}
+
+/* めくった瞬間に読み込みが走らないよう、開始時に12枚を先読みしておく */
+function preloadArt(){
+  if (!ART_DIR || ART_DATA) return;   // 焼き込み版は先読み不要
+  for (let k = 1; k <= KINDS; k++){
+    const im = new Image();
+    im.src = artHref(k);
+  }
+}
+
+function renderFace(kind){
+  const s = KIND_STYLE[kind];
+  const n = kind + 1;
+  const shape = BODIES[kind % BODIES.length];
+  // 複数枚を同時に描いても混ざらないよう、pattern の id は種類ごとに固有にする
+  const pid = `pt${kind}`;
+  const pat = PATTERNS[kind % PATTERNS.length].replace('id="pt"', `id="${pid}"`);
+
+  if (ART_DIR){
+    // 絵柄は 3:4 のカード一枚まるごと。下地の模様も画像に入っているので全面に敷く
+    return `<svg viewBox="0 0 210 280" preserveAspectRatio="xMidYMid slice" aria-label="カード ${n}">
+      <rect width="210" height="280" fill="#ffffff"/>
+      <image href="${artHref(n)}"
+             x="0" y="0" width="210" height="280" preserveAspectRatio="xMidYMid slice"/>
+    </svg>`;
+  }
+
+  // 頭足類（首も胴もなく、頭に直接ほそい脚）の当て込み。絵柄が来たら丸ごと差し替わる。
+  const legN = 2 + (kind % 2);
+  let legs = "";
+  for (let i = 0; i < legN; i++){
+    const t = legN === 1 ? .5 : i / (legN - 1);
+    const x = 105 + (t - .5) * 46;
+    const x2 = 105 + (t - .5) * 62;
+    legs += `<path d="M${x} 166q${(x2 - x) / 2} 22 ${x2 - x} 44" fill="none"
+              stroke="${s.leg}" stroke-width="7" stroke-linecap="round"/>
+             <ellipse cx="${x2}" cy="212" rx="9" ry="4.5" fill="${s.leg}"/>`;
+  }
+
+  const eye = (cx) => `
+    <circle cx="${cx}" cy="98" r="15" fill="#fffdf6" stroke="${s.ink}" stroke-width="2.4"/>
+    <circle cx="${cx}" cy="99" r="8"  fill="${s.iris}"/>
+    <circle cx="${cx}" cy="99" r="3.6" fill="#1d1a16"/>`;
+
+  return `<svg viewBox="0 0 210 280" preserveAspectRatio="xMidYMid slice" aria-label="カード ${n}">
+    <defs>${pat}</defs>
+    <rect width="210" height="280" fill="#ffffff"/>
+    <rect width="210" height="280" fill="url(#${pid})" opacity=".8"/>
+    ${legs}
+    <g stroke="${s.ink}" stroke-width="3" stroke-linejoin="round">
+      <g fill="${s.body}">${shape}</g>
+    </g>
+    ${eye(88)}${eye(124)}
+    <path d="M94 128q11 11 22 0" fill="none" stroke="${s.ink}" stroke-width="3" stroke-linecap="round"/>
+    <text x="105" y="152" text-anchor="middle" dominant-baseline="central"
+          fill="${s.ink}" font-family="Hiragino Sans, Yu Gothic, system-ui, sans-serif"
+          font-weight="900" font-size="46" letter-spacing="-2" opacity=".92">${n}</text>
+  </svg>`;
+}
+
+function renderBack(){
+  return `<svg viewBox="0 0 210 280" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="210" height="280" fill="#0c241d"/>
+    <rect x="9" y="9" width="192" height="262" rx="12" fill="#1a4335" stroke="#2c5b4a" stroke-width="2.6"/>
+    <g fill="#2c5b4a">
+      ${Array.from({length:8},(_,r)=>Array.from({length:6},(_,c)=>
+        `<circle cx="${28+c*31}" cy="${32+r*30.5}" r="3.4"/>`).join("")).join("")}
+    </g>
+    <g transform="translate(105 140)">
+      <ellipse cx="0" cy="0" rx="40" ry="36" fill="#123329" stroke="#2c5b4a" stroke-width="2.6"/>
+      <text x="0" y="2" text-anchor="middle" dominant-baseline="central" fill="#9fbcae"
+            font-family="Hiragino Sans, Yu Gothic, system-ui, sans-serif" font-weight="900" font-size="42">?</text>
+    </g>
+  </svg>`;
+}
+
+/* ============================================================
+   状態
+   ============================================================ */
+const S = {
+  n: 4,
+  players: [],        // { name, col, cards:[kindId,...] }
+  deck: [],           // 未公開の山札（末尾からめくる）
+  pile: [],           // 場に積まれた表向きのカード
+  seen: [],           // 出たことのある種類（bool x12）
+  turn: 0,            // 手番は参加人数から自動で回る（スマホは動かさない）
+  phase: "turn",      // turn | count | reveal | over
+  mode: "seen",       // めくった札の性質: new（初出） | seen（既出）
+  picking: false,     // プレイヤー選択レイヤーを開いているか
+  sound: true,
+  undo: []
+};
+
+/* ============================================================
+   ちいさなユーティリティ
+   ============================================================ */
+const $  = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+/** pointerdown で即反応させる（click の遅延を避ける） */
+function tap(el, fn){
+  if (!el) return;
+  el.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    unlockAudio();
+    fn(e);
+  }, { passive:false });
+}
+
+let toastTimer = 0;
+function toast(msg){
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), 1500);
+}
+
+function shuffle(a){
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ---------- 音（WebAudio 生成・ファイル不要） ---------- */
+let AC = null;
+function unlockAudio(){
+  if (AC || !S.sound) return;
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return;
+  AC = new Ctx();
+  if (AC.state === "suspended") AC.resume();
+}
+function blip(freq, dur, type, vol){
+  if (!S.sound || !AC) return;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type || "triangle";
+  o.frequency.value = freq;
+  const t = AC.currentTime;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol || .16, t + .008);
+  g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g); g.connect(AC.destination);
+  o.start(t); o.stop(t + dur + .02);
+}
+const sTick  = () => blip(660, .07, "square", .10);
+const sGo    = () => blip(1040, .16, "triangle", .17);
+const sClaim = () => { blip(740, .1, "triangle", .17); setTimeout(() => blip(1108, .18, "triangle", .15), 85); };
+const sNext  = () => blip(430, .09, "sine", .12);
+
+/* ---------- スリープ防止 ---------- */
+let wake = null;
+async function keepAwake(){
+  try {
+    if ("wakeLock" in navigator && !wake) wake = await navigator.wakeLock.request("screen");
+  } catch (_) { /* 非対応なら黙って諦める */ }
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && S.phase !== "over") keepAwake();
+});
+
+/* ============================================================
+   画面遷移
+   ============================================================ */
+function go(name){ document.body.dataset.screen = name; }
+$$("[data-go]").forEach(b => tap(b, () => go(b.dataset.go)));
+tap($("[data-sheet='open']"),  () => $("#sheet").classList.add("open"));
+tap($("[data-sheet='close']"), () => $("#sheet").classList.remove("open"));
+$$("[data-scores='close']").forEach(b => tap(b, () => $("#scores").classList.remove("open")));
+
+tap($("#sound-toggle"), () => {
+  S.sound = !S.sound;
+  const b = $("#sound-toggle");
+  b.textContent = S.sound ? "音 ON" : "音 OFF";
+  b.setAttribute("aria-pressed", String(S.sound));
+  if (S.sound) { unlockAudio(); sNext(); }
+});
+
+/* ---------- STEP 1: 人数 ---------- */
+(function buildCount(){
+  const g = $("#count-grid");
+  for (let n = MIN_P; n <= MAX_P; n++){
+    const b = document.createElement("button");
+    b.className = "count-cell";
+    b.type = "button";
+    b.setAttribute("aria-pressed", String(n === S.n));
+    b.innerHTML = `${n}<span>にん</span>`;
+    tap(b, () => {
+      S.n = n;
+      $$("#count-grid .count-cell").forEach((c, i) =>
+        c.setAttribute("aria-pressed", String(i + MIN_P === n)));
+      sNext();
+    });
+    g.appendChild(b);
+  }
+})();
+
+tap($("#to-names"), () => { buildNames(); go("names"); });
+
+/* ---------- STEP 2: 名前 ---------- */
+function buildNames(){
+  const list = $("#name-list");
+  const prev = [...list.querySelectorAll("input")].map(i => i.value);
+  list.innerHTML = "";
+  for (let i = 0; i < S.n; i++){
+    const row = document.createElement("div");
+    row.className = "name-row";
+    row.innerHTML =
+      `<span class="chip" style="background:${PCOL[i]}">${i + 1}</span>` +
+      `<input type="text" maxlength="6" inputmode="text" placeholder="プレイヤー${i + 1}"
+              value="${(prev[i] || "").replace(/"/g, "&quot;")}" aria-label="${i + 1}人目の名前">`;
+    list.appendChild(row);
+  }
+}
+
+tap($("#start-game"), () => {
+  const names = [...$("#name-list").querySelectorAll("input")]
+    .map((inp, i) => (inp.value.trim() || `P${i + 1}`).slice(0, 6));
+  startGame(names);
+});
+
+/* ============================================================
+   ゲーム本体
+   ============================================================ */
+function startGame(names){
+  S.players = names.map((name, i) => ({ name, col: PCOL[i], cards: [] }));
+  S.deck = shuffle(Array.from({ length: KINDS * COPIES }, (_, i) => i % KINDS));
+  S.pile = [];
+  S.seen = Array(KINDS).fill(false);
+  S.turn = 0;
+  S.phase = "turn";
+  S.undo = [];
+
+  $("#card-back").innerHTML = renderBack();
+  preloadArt();
+  buildClaimGrid();
+  showTurn();
+  paintHud();
+  paintPile();
+  go("game");
+  keepAwake();
+}
+
+function buildClaimGrid(){
+  const g = $("#claim-grid");
+  g.className = "claim-grid";
+  g.innerHTML = "";
+  S.players.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.className = "claim";
+    b.type = "button";
+    b.style.background = p.col;
+    b.innerHTML = `${escapeHtml(p.name)}<em>がとった</em>`;
+    tap(b, () => claim(i));
+    g.appendChild(b);
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+}
+
+/* ---------- HUD ---------- */
+function paintHud(){
+  $("#m-deck").textContent = S.deck.length;
+  $("#m-pile").textContent = S.pile.length;
+  $("#btn-undo").disabled = S.undo.length === 0;
+}
+
+/* ---------- 場の厚み ---------- */
+const TILT = [-2.4, 1.8, -1.1, 2.9, -3.2, 1.2, -1.9, 2.2];
+function paintPile(){
+  const st = $("#pilestack");
+  const under = Math.max(0, Math.min(S.pile.length - 1, 6));
+  let h = "";
+  for (let i = 0; i < under; i++){
+    const t = TILT[i % TILT.length];
+    h += `<i style="transform:translate(-50%,-50%) rotate(${t}deg) translate(${t * .8}px,${-i * .7}px);left:50%;top:50%"></i>`;
+  }
+  st.innerHTML = h;
+  $("#empty-note").style.display = S.pile.length ? "none" : "block";
+}
+
+/* ---------- 下段メッセージの差し替え ---------- */
+function setMsg(top, topClass, mainHTML){
+  const t = $("#msg-top");
+  t.className = "msg-top" + (topClass ? " " + topClass : "");
+  t.textContent = top;
+  $("#msg-main").innerHTML = mainHTML;
+}
+
+/* ---------- 手番表示 ----------
+   手番は人数から自動で回る。スマホは真ん中に置いたまま動かさない。 */
+function showTurn(){
+  S.phase = "turn";
+  closePicker();
+  const p = S.players[S.turn];
+  setMsg("つぎの ばん", "", `<i style="background:${p.col}"></i>${escapeHtml(p.name)}`);
+  const b = $("#btn-action");
+  b.textContent = "めくる";
+  b.disabled = false;
+  paintHud();
+}
+
+/* ---------- めくる：3・2・1 → 表 ---------- */
+let seq = [];
+function clearSeq(){ seq.forEach(clearTimeout); seq = []; }
+
+/* 下段のボタンは1つだけ。位置は固定で、状態に応じて役割だけ変わる */
+tap($("#btn-action"), () => {
+  if (S.phase === "turn") { doFlip(); return; }
+  if (S.phase === "reveal"){
+    sNext();
+    if (S.mode === "new") nextTurn();   // 初出：名付けたら次の人へ
+    else openPicker();                  // 既出：取った人を選ぶ
+  }
+});
+
+function doFlip(){
+  if (S.deck.length === 0) { finish(); return; }
+  S.phase = "count";
+  $("#btn-action").disabled = true;
+
+  const cd = $("#countdown");
+  cd.classList.add("on");
+  const step = (label, isGo) => {
+    cd.innerHTML = `<b class="${isGo ? "go" : ""}">${label}</b><small>${isGo ? "" : "てを どけて"}</small>`;
+    isGo ? sGo() : sTick();
+  };
+  step("3", false);
+  seq.push(setTimeout(() => step("2", false), 600));
+  seq.push(setTimeout(() => step("1", false), 1200));
+  seq.push(setTimeout(() => step("それ！", true), 1800));
+  seq.push(setTimeout(() => { cd.classList.remove("on"); reveal(); }, 2130));
+}
+
+function reveal(){
+  pushUndo();
+  const kind = S.deck.pop();
+
+  // ★初出かどうかはアプリが判定する（プレイヤーに聞かない）
+  const isNew = !S.seen[kind];
+  S.seen[kind] = true;
+  S.pile.push(kind);
+
+  paintPile();
+  $("#card-face").innerHTML = renderFace(kind);
+  const box = $("#cardbox");
+  box.style.display = "";
+  box.classList.remove("flip", "win");
+  void box.offsetWidth;          // アニメを確実に再生させる
+  box.classList.add("flip");
+
+  S.phase = "reveal";
+  S.mode = isNew ? "new" : "seen";
+  closePicker();
+  paintResolve();
+  paintHud();
+}
+
+/* ---------- めくった直後の下段 ---------- */
+function paintResolve(){
+  const isNew = S.mode === "new";
+  const namer = S.players[S.turn];              // めくった人＝名付ける人
+
+  if (isNew){
+    setMsg("はじめて 出た顔！", "is-new",
+      `<span><b style="color:${namer.col}">${escapeHtml(namer.name)}</b> が 名付けて！</span>`);
+  } else {
+    setMsg("まえに 出た顔！", "is-seen", "<span>早く 言えた人は？</span>");
+  }
+
+  const b = $("#btn-action");
+  b.textContent = isNew ? "名付けた → つぎへ" : "すすむ";
+  b.disabled = false;
+}
+
+/* ---------- プレイヤー選択レイヤー ---------- */
+function openPicker(){
+  S.picking = true;
+  $("#pk-sub").textContent = `場の ${S.pile.length}枚 をもらえます`;
+  $("#picker").classList.add("on");
+}
+function closePicker(){
+  S.picking = false;
+  $("#picker").classList.remove("on");
+}
+
+/* ---------- 選択：だれが取ったか ---------- */
+function claim(i){
+  if (S.phase !== "reveal" || !S.picking) return;
+  if (S.pile.length === 0) { toast("場にカードがありません"); return; }
+
+  const took = S.pile.length;
+  S.players[i].cards.push(...S.pile);
+  S.pile = [];
+  sClaim();
+  closePicker();
+
+  const box = $("#cardbox");
+  box.classList.remove("flip");
+  void box.offsetWidth;
+  box.classList.add("win");
+
+  toast(`${S.players[i].name} が ${took}枚 とった`);
+
+  setTimeout(() => {
+    box.style.display = "none";
+    box.classList.remove("win");
+    paintPile();
+    nextTurn();
+  }, 300);
+}
+
+/* ---------- 既出だけど誰も言えなかった（場に積まれたまま次へ） ---------- */
+tap($("#btn-none"), () => {
+  if (S.phase !== "reveal" || !S.picking) return;
+  sNext();
+  closePicker();
+  nextTurn();
+});
+
+/* ---------- 選択をやめて札を見なおす ---------- */
+tap($("#btn-back"), () => closePicker());
+
+function nextTurn(){
+  if (S.deck.length === 0) { finish(); return; }
+  S.turn = (S.turn + 1) % S.players.length;   // 人数から自動で回す
+  showTurn();
+}
+
+/* ---------- もどす（1手だけ巻き戻す） ---------- */
+function pushUndo(){
+  S.undo.push({
+    deck: S.deck.slice(),
+    pile: S.pile.slice(),
+    seen: S.seen.slice(),
+    turn: S.turn,
+    cards: S.players.map(p => p.cards.slice())
+  });
+  if (S.undo.length > MAX_UNDO) S.undo.shift();
+}
+
+tap($("#btn-undo"), () => {
+  if (S.phase === "count") return;
+  const u = S.undo.pop();
+  if (!u) return;
+  clearSeq();
+  $("#countdown").classList.remove("on");
+  S.deck = u.deck; S.pile = u.pile; S.seen = u.seen; S.turn = u.turn;
+  S.players.forEach((p, i) => p.cards = u.cards[i]);
+  $("#cardbox").style.display = S.pile.length ? "" : "none";
+  if (S.pile.length) $("#card-face").innerHTML = renderFace(S.pile[S.pile.length - 1]);
+  paintPile();
+  showTurn();
+  go("game");
+  toast("1手もどしました");
+});
+
+/* ---------- 枚数の確認 ---------- */
+tap($("#btn-scores"), () => {
+  const max = Math.max(1, ...S.players.map(p => p.cards.length));
+  $("#score-list").innerHTML = S.players.map(p => `
+    <div class="srow">
+      <span class="chip" style="background:${p.col};width:26px;height:26px;flex:0 0 26px;font-size:12px"></span>
+      <span class="nm">${escapeHtml(p.name)}</span>
+      <span class="bar"><i style="width:${(p.cards.length / max * 100).toFixed(0)}%;background:${p.col}"></i></span>
+      <span class="n">${p.cards.length}<u>枚</u></span>
+    </div>`).join("");
+  $("#scores").classList.add("open");
+});
+
+/* ---------- 結果 ---------- */
+function finish(){
+  S.phase = "over";
+  clearSeq();
+  if (wake) { try { wake.release(); } catch (_) {} wake = null; }
+
+  const ranked = S.players.map((p, i) => ({ ...p, i })).sort((a, b) => b.cards.length - a.cards.length);
+  const best = ranked[0].cards.length;
+  const winners = ranked.filter(p => p.cards.length === best);
+
+  $("#result-head").textContent = winners.length > 1
+    ? `${winners.map(w => w.name).join("・")} の ひきわけ！`
+    : `${winners[0].name} の かち！`;
+
+  let rank = 0, prev = -1;
+  $("#podium").innerHTML = ranked.map((p, idx) => {
+    if (p.cards.length !== prev) { rank = idx + 1; prev = p.cards.length; }
+    return `<div class="prow${p.cards.length === best ? " top" : ""}">
+      <span class="rk">${rank}</span>
+      <span class="nm">${escapeHtml(p.name)}</span>
+      <span class="n">${p.cards.length}<u>枚</u></span>
+    </div>`;
+  }).join("");
+
+  sClaim();
+  go("result");
+}
+
+tap($("#again"), () => startGame(S.players.map(p => p.name)));
+
+/* ---------- オフライン化 ----------
+   https か localhost のときだけ Service Worker を登録する。
+   file:// や埋め込み表示では何も起きない（登録できない環境で例外を出さない）。 */
+if ("serviceWorker" in navigator &&
+    (location.protocol === "https:" || location.hostname === "localhost")){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+
+/* ---------- 起動 ---------- */
+buildNames();
+go("title");
+</script>

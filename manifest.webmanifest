@@ -1,0 +1,30 @@
+{
+  "name": "ナンジャナイモンジャ",
+  "short_name": "ナンジャナイモンジャ",
+  "description": "へんな生き物に名前をつけて早く呼ぶ、名前つけ早押しカードゲーム。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#123329",
+  "theme_color": "#123329",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
