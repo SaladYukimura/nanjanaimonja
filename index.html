@@ -300,12 +300,12 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
 
 /* 山札の影（カードを置く位置の目印）*/
 .slot{
-  position:absolute; height:min(100%,380px); aspect-ratio:3/4;
+  position:absolute; height:min(100%,120vw,460px); aspect-ratio:3/4;
   border-radius:18px; border:2px dashed #ffffff1f;
 }
 
 .cardbox{
-  position:relative; height:min(100%,380px); aspect-ratio:3/4;
+  position:relative; height:min(100%,120vw,460px); aspect-ratio:3/4;
   transform-style:preserve-3d;
   will-change:transform;
 }
@@ -331,7 +331,7 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
 /* 場に溜まったカードの厚み */
 .pilestack{ position:absolute; inset:0; pointer-events:none; }
 .pilestack i{
-  position:absolute; height:min(100%,380px); aspect-ratio:3/4;
+  position:absolute; height:min(100%,120vw,460px); aspect-ratio:3/4;
   border-radius:18px; background:var(--paper-2);
   border:1px solid #0003;
   transform-origin:50% 60%;
@@ -368,8 +368,9 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
   color:var(--dim); font-weight:700;
 }
 
-/* -- 下部：操作エリア -- */
-.deck-area{ flex:0 0 auto; padding-top:14px; }
+/* -- 下部：操作エリア --
+   画面の下端ぎりぎりだと押しにくいので、セーフエリアに足して余白をとる */
+.deck-area{ flex:0 0 auto; padding-top:14px; padding-bottom:22px; }
 
 [hidden]{ display:none !important; }
 
