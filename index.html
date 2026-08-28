@@ -291,16 +291,24 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
 .icon-btn[disabled]{ opacity:.32; }
 
 /* -- 中央：カード置き場 -- */
+/* padding-top のぶんだけ札が下に寄る（中央揃えなので下がるのは半分の15px）。
+   これで「HUD下→札上」と「札下→文言」の余白が揃う。
+   .slot と .pilestack も同じ基準にするため、この値を --deal-offset で共有する。 */
 .table{
+  --deal-offset: 30px;
   flex:1; position:relative;
   display:grid; place-items:center;
   min-height:0;
+  padding-top: var(--deal-offset);
   contain: layout paint;
 }
 
 /* 山札の影（カードを置く位置の目印）*/
+/* 絶対配置なので padding-top では動かない。札と同じだけ明示的に下げる */
 .slot{
-  position:absolute; height:min(100%,120vw,460px); aspect-ratio:3/4;
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%) translateY(calc(var(--deal-offset) / 2));
+  height:min(100%,120vw,460px); aspect-ratio:3/4;
   border-radius:18px; border:2px dashed #ffffff1f;
 }
 
@@ -329,7 +337,7 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
 .face svg,.back svg{ display:block; width:100%; height:100%; }
 
 /* 場に溜まったカードの厚み */
-.pilestack{ position:absolute; inset:0; pointer-events:none; }
+.pilestack{ position:absolute; inset:var(--deal-offset) 0 0 0; pointer-events:none; }
 .pilestack i{
   position:absolute; height:min(100%,120vw,460px); aspect-ratio:3/4;
   border-radius:18px; background:var(--paper-2);
@@ -339,7 +347,9 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
 
 /* 場が空のときの案内 */
 .empty-note{
-  position:absolute; text-align:center; color:#ffffff2e;
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%) translateY(calc(var(--deal-offset) / 2));
+  text-align:center; color:#ffffff2e; white-space:nowrap;
   font-family:var(--face-display); font-weight:900; font-size:15px; letter-spacing:.16em;
 }
 
