@@ -172,15 +172,15 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='132'%3E%3Ccircle cx='22' cy='30' r='3.6' fill='%23eec9d8'/%3E%3Ccircle cx='104' cy='96' r='3.2' fill='%23cfe0ac'/%3E%3Ccircle cx='84' cy='18' r='6' fill='none' stroke='%23c6dced' stroke-width='2'/%3E%3Ccircle cx='30' cy='104' r='7' fill='none' stroke='%23eec9d8' stroke-width='2'/%3E%3Cg stroke='%23f0e0a8' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M118 40v10M113 45h10'/%3E%3C/g%3E%3Cg stroke='%23cfe0ac' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M60 62v9M55.5 66.5h9'/%3E%3C/g%3E%3C/svg%3E"),
     linear-gradient(#fdfbf2 0%, #f4f7e4 58%, #e8f0d6 100%);
 }
-#s-title .t-top{ flex:0 0 auto; width:100%; padding-top:7vh; }
-#s-title .eyebrow{ color:#6e7f62; margin-top:16px; }
+#s-title .t-top{ flex:0 0 auto; width:100%; padding-top:4vh; }
+#s-title .eyebrow{ color:#6e7f62; margin-top:9px; }
 
 /* キャスト：箱の表紙のように、下ぞろえで重ねて並べる。
    画面の端まで使いたいので、左右の余白を無視して 100vw まで広げる
    （.stage が overflow:hidden なので画面外へはこぼれない）。 */
 .cast{
   position:absolute; left:0; right:0; bottom:0;
-  height:67%; z-index:1; pointer-events:none;
+  height:70%; z-index:1; pointer-events:none;
 }
 #s-title .t-top,
 #s-title .t-bottom{ position:relative; z-index:4; }
@@ -194,11 +194,14 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
 }
 /* 外側2体は縦をいっぱいに使い、中央のオレンジだけ小柄にして手前に立たせる。
    左右は画面外にはみ出させて、端まで詰まって見えるようにする。 */
-/* 黒を緑より前に置く。同じ重ね順だと緑の葉が黒い子の右目にかぶる */
-.cast .c1{ left:-22%;  height:100%; z-index:2; transform:rotate(-5deg); }
-.cast .c2{ right:-33%; height:100%; z-index:1; transform:rotate(4deg); }
-/* 中央のオレンジも少し左へ。緑の左目にかかる羽をどかすため */
-.cast .c3{ left:50%;   height:71%;  z-index:3; transform:translateX(-56%) rotate(-2deg); }
+/* 左右の位置は「画面幅の％」ではなく「絵自身の幅の％」で決める（translateX）。
+   大きさが高さ基準なので、画面幅基準だと縦長の端末で3体が寄りすぎ、
+   オレンジが緑の左目を隠してしまう。自分の幅基準ならどの比率でも同じ間隔になる。
+   黒は緑より前（z-index 2）。同じ重ね順だと緑の葉が黒い子の右目にかぶる。 */
+.cast .c1{ left:50%; height:100%; z-index:2; transform:translateX(-72%) rotate(-5deg); }
+.cast .c2{ left:50%; height:100%; z-index:1; bottom:15px;
+           transform:translateX(-11%) translateX(-20px) rotate(4deg); }
+.cast .c3{ left:50%; height:71%;  z-index:3; transform:translateX(-50%) rotate(-2deg); }
 
 #s-title .t-bottom{ flex:0 0 auto; width:100%; padding-top:6px; }
 /* 絵の足元にかかる淡いかすみ。文字とボタンの下地を作りつつ、絵は透かして見せる */
