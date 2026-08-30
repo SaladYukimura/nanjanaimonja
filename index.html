@@ -172,9 +172,8 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='132'%3E%3Ccircle cx='22' cy='30' r='3.6' fill='%23eec9d8'/%3E%3Ccircle cx='104' cy='96' r='3.2' fill='%23cfe0ac'/%3E%3Ccircle cx='84' cy='18' r='6' fill='none' stroke='%23c6dced' stroke-width='2'/%3E%3Ccircle cx='30' cy='104' r='7' fill='none' stroke='%23eec9d8' stroke-width='2'/%3E%3Cg stroke='%23f0e0a8' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M118 40v10M113 45h10'/%3E%3C/g%3E%3Cg stroke='%23cfe0ac' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M60 62v9M55.5 66.5h9'/%3E%3C/g%3E%3C/svg%3E"),
     linear-gradient(#fdfbf2 0%, #f4f7e4 58%, #e8f0d6 100%);
 }
-#s-title .t-top{ flex:0 0 auto; width:100%; padding-top:1vh; }
-#s-title .eyebrow{ color:#7d8b6e; }
-#s-title .sub{ color:#5c6b5c; margin-top:12px; }
+#s-title .t-top{ flex:0 0 auto; width:100%; padding-top:7vh; }
+#s-title .eyebrow{ color:#6e7f62; margin-top:16px; }
 
 /* キャスト：箱の表紙のように、下ぞろえで重ねて並べる */
 .cast{
@@ -187,9 +186,10 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
   filter:drop-shadow(0 10px 14px #4a55361f);
   -webkit-user-drag:none; user-select:none;
 }
-.cast .c1{ left:-11%;  width:65%; z-index:2; transform:rotate(-5deg); }
-.cast .c2{ right:-13%; width:71%; z-index:1; transform:rotate(4deg); }
-.cast .c3{ left:50%;   width:55%; z-index:3; bottom:-1%; transform:translateX(-50%) rotate(-2deg); }
+/* 外側2体を大きく、中央のオレンジだけ小柄にして手前に立たせる */
+.cast .c1{ left:-13%;  width:72%; z-index:1; transform:rotate(-5deg); }
+.cast .c2{ right:-15%; width:76%; z-index:1; transform:rotate(4deg); }
+.cast .c3{ left:50%;   width:48%; z-index:3; bottom:-1%; transform:translateX(-50%) rotate(-2deg); }
 
 #s-title .t-bottom{ flex:0 0 auto; width:100%; padding-top:6px; }
 .tap-hint{
@@ -584,7 +584,6 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
 <!-- ============ 1. タイトル ============ -->
 <section class="screen" id="s-title">
   <div class="t-top">
-  <p class="eyebrow">名前をつけて 早く呼ぶ カードゲーム</p>
   <h1 class="logo"><!--LOGO-->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-250.0 -530.0 6250.0 2820.0" role="img" aria-label="ナンジャナイモンジャ">
 <title>ナンジャナイモンジャ</title>
@@ -617,28 +616,30 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
     <g transform="rotate(2 3350.0 1600.0) translate(2850.0 1912.0) scale(1 -1)"><path d="M725 821V700H467C467 355 440 83 248 52C251 89 225 114 194 114C165 114 141 90 141 60C141 31 163 15 194 9C237 0 277 1 310 1C591 1 792 212 819 605L842 607L813 829ZM853 830 873 609 988 619 942 838ZM111 344H408V444H111ZM111 701V503H408C409 545 409 568 408 603C315 623 188 666 111 701Z"/></g>
     <g transform="rotate(-3 4300.0 1600.0) translate(3800.0 1924.0) scale(1 -1)"><path d="M589 159C757 154 802 324 787 452L444 411L423 527L257 497C263 465 270 428 278 392L190 381L199 306L296 318C330 184 378 49 440 -14L519 0L458 337L644 359C652 303 648 255 626 220C619 238 599 250 578 247C554 244 537 223 539 198C543 173 564 160 589 159Z"/></g>
   </g>
-  <!-- 白抜きの本体 -->
+  <!-- 本体（「ナイ」だけ差し色） -->
   <g fill="#f6f0df">
     <g transform="rotate(-5 500.0 480.0) translate(0.0 810.0) scale(1 -1)"><path d="M864 481V582H738C741 632 742 685 742 737H439C439 690 440 638 439 582H138V368C221 406 325 431 435 448C423 278 384 115 262 52C262 88 235 103 211 103C183 103 160 80 160 52C160 25 186 4 220 2C239 0 257 0 275 1C582 12 692 217 727 476C777 479 821 480 864 481Z"/></g>
     <g transform="rotate(3 1450.0 480.0) translate(950.0 792.0) scale(1 -1)"><path d="M455 356V582H125V471C228 445 372 394 455 356ZM247 0C294 -5 342 -5 382 -2C816 30 882 274 882 639L574 643C574 306 523 136 286 47C286 81 262 100 237 100C209 100 187 77 187 49C187 23 210 4 247 0Z"/></g>
     <g transform="rotate(-2 2400.0 480.0) translate(1900.0 805.0) scale(1 -1)"><path d="M725 821V700H467C467 355 440 83 248 52C251 89 225 114 194 114C165 114 141 90 141 60C141 31 163 15 194 9C237 0 277 1 310 1C591 1 792 212 819 605L842 607L813 829ZM853 830 873 609 988 619 942 838ZM111 344H408V444H111ZM111 701V503H408C409 545 409 568 408 603C315 623 188 666 111 701Z"/></g>
     <g transform="rotate(4 3350.0 480.0) translate(2850.0 796.0) scale(1 -1)"><path d="M589 159C757 154 802 324 787 452L444 411L423 527L257 497C263 465 270 428 278 392L190 381L199 306L296 318C330 184 378 49 440 -14L519 0L458 337L644 359C652 303 648 255 626 220C619 238 599 250 578 247C554 244 537 223 539 198C543 173 564 160 589 159Z"/></g>
-    <g transform="rotate(-4 4300.0 480.0) translate(3800.0 809.0) scale(1 -1)"><path d="M864 481V582H738C741 632 742 685 742 737H439C439 690 440 638 439 582H138V368C221 406 325 431 435 448C423 278 384 115 262 52C262 88 235 103 211 103C183 103 160 80 160 52C160 25 186 4 220 2C239 0 257 0 275 1C582 12 692 217 727 476C777 479 821 480 864 481Z"/></g>
-    <g transform="rotate(3 5250.0 480.0) translate(4750.0 794.0) scale(1 -1)"><path d="M448 0H693V435C770 490 832 602 832 708H523C523 568 423 431 228 361C228 394 212 419 177 419C148 419 126 399 126 370C126 341 150 321 179 314C265 293 426 314 526 354C482 253 450 119 448 0Z"/></g>
     <g transform="rotate(3 1450.0 1600.0) translate(950.0 1915.0) scale(1 -1)"><path d="M666 4C711 1 759 0 813 8C841 13 862 32 862 58C862 86 839 107 813 107C785 107 764 86 764 58V53C651 60 547 134 547 353H845V442H547V527H816V735C541 735 328 657 164 586V527H249V442H141V353H253C274 133 386 26 666 4Z"/></g>
     <g transform="rotate(-4 2400.0 1600.0) translate(1900.0 1928.0) scale(1 -1)"><path d="M455 356V582H125V471C228 445 372 394 455 356ZM247 0C294 -5 342 -5 382 -2C816 30 882 274 882 639L574 643C574 306 523 136 286 47C286 81 262 100 237 100C209 100 187 77 187 49C187 23 210 4 247 0Z"/></g>
     <g transform="rotate(2 3350.0 1600.0) translate(2850.0 1912.0) scale(1 -1)"><path d="M725 821V700H467C467 355 440 83 248 52C251 89 225 114 194 114C165 114 141 90 141 60C141 31 163 15 194 9C237 0 277 1 310 1C591 1 792 212 819 605L842 607L813 829ZM853 830 873 609 988 619 942 838ZM111 344H408V444H111ZM111 701V503H408C409 545 409 568 408 603C315 623 188 666 111 701Z"/></g>
     <g transform="rotate(-3 4300.0 1600.0) translate(3800.0 1924.0) scale(1 -1)"><path d="M589 159C757 154 802 324 787 452L444 411L423 527L257 497C263 465 270 428 278 392L190 381L199 306L296 318C330 184 378 49 440 -14L519 0L458 337L644 359C652 303 648 255 626 220C619 238 599 250 578 247C554 244 537 223 539 198C543 173 564 160 589 159Z"/></g>
   </g>
+  <g fill="#ff5b3c">
+    <g transform="rotate(-4 4300.0 480.0) translate(3800.0 809.0) scale(1 -1)"><path d="M864 481V582H738C741 632 742 685 742 737H439C439 690 440 638 439 582H138V368C221 406 325 431 435 448C423 278 384 115 262 52C262 88 235 103 211 103C183 103 160 80 160 52C160 25 186 4 220 2C239 0 257 0 275 1C582 12 692 217 727 476C777 479 821 480 864 481Z"/></g>
+    <g transform="rotate(3 5250.0 480.0) translate(4750.0 794.0) scale(1 -1)"><path d="M448 0H693V435C770 490 832 602 832 708H523C523 568 423 431 228 361C228 394 212 419 177 419C148 419 126 399 126 370C126 341 150 321 179 314C265 293 426 314 526 354C482 253 450 119 448 0Z"/></g>
+  </g>
 </svg>
   <!--/LOGO--></h1>
-    <p class="sub">へんな生き物に名前をつけて、二度目に出たら早く呼んだ人が総取り。</p>
+    <p class="eyebrow">名前をつけて 早く呼ぶ カードゲーム</p>
   </div>
 
   <div class="cast" aria-hidden="true">
-    <img class="c1" src="cast/03.png" alt="" draggable="false">
+    <img class="c1" src="cast/02.png" alt="" draggable="false">
     <img class="c2" src="cast/01.png" alt="" draggable="false">
-    <img class="c3" src="cast/02.png" alt="" draggable="false">
+    <img class="c3" src="cast/03.png" alt="" draggable="false">
   </div>
 
   <div class="t-bottom">
