@@ -194,9 +194,11 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
 }
 /* 外側2体は縦をいっぱいに使い、中央のオレンジだけ小柄にして手前に立たせる。
    左右は画面外にはみ出させて、端まで詰まって見えるようにする。 */
-.cast .c1{ left:-22%;  height:100%; z-index:1; transform:rotate(-5deg); }
-.cast .c2{ right:-24%; height:100%; z-index:1; transform:rotate(4deg); }
-.cast .c3{ left:50%;   height:71%;  z-index:3; transform:translateX(-50%) rotate(-2deg); }
+/* 黒を緑より前に置く。同じ重ね順だと緑の葉が黒い子の右目にかぶる */
+.cast .c1{ left:-22%;  height:100%; z-index:2; transform:rotate(-5deg); }
+.cast .c2{ right:-33%; height:100%; z-index:1; transform:rotate(4deg); }
+/* 中央のオレンジも少し左へ。緑の左目にかかる羽をどかすため */
+.cast .c3{ left:50%;   height:71%;  z-index:3; transform:translateX(-56%) rotate(-2deg); }
 
 #s-title .t-bottom{ flex:0 0 auto; width:100%; padding-top:6px; }
 /* 絵の足元にかかる淡いかすみ。文字とボタンの下地を作りつつ、絵は透かして見せる */
