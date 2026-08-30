@@ -2,13 +2,16 @@
    カード画像まで含めて最初の1回で全部キャッシュするので、
    2回目以降は電波が無くても起動する。
    絵柄やコードを更新したら CACHE の番号を上げること。 */
-const CACHE = "nanjanaimonja-v5";
+const CACHE = "nanjanaimonja-v6";
 
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./mochiypop-subset.woff2",
+  "./cast/01.png",
+  "./cast/02.png",
+  "./cast/03.png",
   "./apple-touch-icon.png",
   "./icon-192.png",
   "./icon-512.png",

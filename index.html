@@ -162,8 +162,51 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
 /* ============================================================
    1. タイトル
    ============================================================ */
-#s-title{ justify-content:center; align-items:center; text-align:center; gap:0; }
-.mark{ width:min(38vw,158px); height:auto; margin-bottom:20px; filter:drop-shadow(0 10px 24px #0006); }
+/* ---------- タイトル ----------
+   箱の表面に見立てた明るい下地。遊び始めると濃い緑の卓に切り替わる。
+   白抜きのロゴは太い縁取りがあるので明るい地でも読める。 */
+#s-title{
+  justify-content:space-between; align-items:center; text-align:center; gap:0;
+  background-color:#fbf7e8;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='132'%3E%3Ccircle cx='22' cy='30' r='3.6' fill='%23eec9d8'/%3E%3Ccircle cx='104' cy='96' r='3.2' fill='%23cfe0ac'/%3E%3Ccircle cx='84' cy='18' r='6' fill='none' stroke='%23c6dced' stroke-width='2'/%3E%3Ccircle cx='30' cy='104' r='7' fill='none' stroke='%23eec9d8' stroke-width='2'/%3E%3Cg stroke='%23f0e0a8' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M118 40v10M113 45h10'/%3E%3C/g%3E%3Cg stroke='%23cfe0ac' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M60 62v9M55.5 66.5h9'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(#fdfbf2 0%, #f4f7e4 58%, #e8f0d6 100%);
+}
+#s-title .t-top{ flex:0 0 auto; width:100%; padding-top:1vh; }
+#s-title .eyebrow{ color:#7d8b6e; }
+#s-title .sub{ color:#5c6b5c; margin-top:12px; }
+
+/* キャスト：箱の表紙のように、下ぞろえで重ねて並べる */
+.cast{
+  flex:1 1 auto; position:relative; width:100%;
+  min-height:0; align-self:stretch;
+  margin:1vh 0 0;
+}
+.cast img{
+  position:absolute; bottom:0; height:auto;
+  filter:drop-shadow(0 10px 14px #4a55361f);
+  -webkit-user-drag:none; user-select:none;
+}
+.cast .c1{ left:-11%;  width:65%; z-index:2; transform:rotate(-5deg); }
+.cast .c2{ right:-13%; width:71%; z-index:1; transform:rotate(4deg); }
+.cast .c3{ left:50%;   width:55%; z-index:3; bottom:-1%; transform:translateX(-50%) rotate(-2deg); }
+
+#s-title .t-bottom{ flex:0 0 auto; width:100%; padding-top:6px; }
+.tap-hint{
+  position:relative; z-index:4;
+  font-family:var(--face-display); font-weight:400;
+  font-size:clamp(16px,4.6vw,19px); color:#31432f;
+  margin-bottom:14px; letter-spacing:.02em;
+  text-shadow:0 1px 0 #ffffffb3, 0 0 12px #f7fae9cc;
+  animation: tapPulse 1.7s ease-in-out infinite;
+}
+@keyframes tapPulse{ 0%,100%{ opacity:.62 } 50%{ opacity:1 } }
+
+/* 明るい地に合わせた小ボタン */
+#s-title .btn.ghost{
+  color:#4e5f4a; border-color:#c3cdae; background:#ffffff8c;
+}
+#s-title .btn.ghost:active{ background:#ffffffd9; }
 
 /* ---------- ロゴ ----------
    書体「マルデコ」の字形をパスに変換して埋め込んだもの（scratchpad/makelogo.py で生成）。
@@ -178,8 +221,7 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
   margin-top:14px; font-size:13px; color:var(--dim); line-height:1.8;
   max-width:26em;
 }
-#s-title .btn.hot{ margin-top:34px; min-width:min(220px, 72vw); }
-.title-foot{ margin-top:16px; display:flex; gap:10px; }
+.title-foot{ display:flex; gap:10px; justify-content:center; }
 
 /* ルールのシート */
 .sheet{
@@ -541,30 +583,7 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
 
 <!-- ============ 1. タイトル ============ -->
 <section class="screen" id="s-title">
-  <svg class="mark" viewBox="0 0 200 150" aria-hidden="true">
-    <g transform="rotate(-9 100 78)">
-      <rect x="34" y="20" width="132" height="112" rx="14" fill="#0c241d" opacity=".5"/>
-    </g>
-    <g transform="rotate(-3 100 76)">
-      <rect x="36" y="16" width="130" height="112" rx="14" fill="#e8dfc6"/>
-    </g>
-    <g transform="rotate(5 100 74)">
-      <rect x="38" y="12" width="128" height="112" rx="14" fill="#f6f0df" stroke="#14231d" stroke-width="3"/>
-      <g transform="translate(102 68)">
-        <ellipse cx="0" cy="-2" rx="34" ry="31" fill="#ff5b3c" opacity=".55"/>
-        <ellipse cx="4" cy="2" rx="34" ry="31" fill="#ff5b3c"/>
-        <ellipse cx="4" cy="2" rx="34" ry="31" fill="none" stroke="#14231d" stroke-width="3"/>
-        <circle cx="-8" cy="-3" r="8.5" fill="#f6f0df" stroke="#14231d" stroke-width="2.4"/>
-        <circle cx="16" cy="-3" r="8.5" fill="#f6f0df" stroke="#14231d" stroke-width="2.4"/>
-        <circle cx="-6" cy="-1" r="3.6" fill="#14231d"/>
-        <circle cx="18" cy="-1" r="3.6" fill="#14231d"/>
-        <path d="M-6 16 q10 9 20 0" fill="none" stroke="#14231d" stroke-width="3" stroke-linecap="round"/>
-        <path d="M-14 31 v14 M4 33 v14 M22 31 v14" stroke="#14231d" stroke-width="4.5" stroke-linecap="round"/>
-        <path d="M4 -30 q1 -13 9 -17" fill="none" stroke="#14231d" stroke-width="3.4" stroke-linecap="round"/>
-        <circle cx="15" cy="-49" r="5.6" fill="#f0b03a" stroke="#14231d" stroke-width="2.4"/>
-      </g>
-    </g>
-  </svg>
+  <div class="t-top">
   <p class="eyebrow">名前をつけて 早く呼ぶ カードゲーム</p>
   <h1 class="logo"><!--LOGO-->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-250.0 -530.0 6250.0 2820.0" role="img" aria-label="ナンジャナイモンジャ">
@@ -613,11 +632,21 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
   </g>
 </svg>
   <!--/LOGO--></h1>
-  <p class="sub">へんな生き物に名前をつけて、二度目に出たら早く呼んだ人が総取り。スマホ1台をみんなで囲んで遊びます。</p>
-  <button class="btn hot" data-go="count">はじめる</button>
-  <div class="title-foot">
-    <button class="btn ghost" data-sheet="open">あそびかた</button>
-    <button class="btn ghost" id="sound-toggle" aria-pressed="true">音 ON</button>
+    <p class="sub">へんな生き物に名前をつけて、二度目に出たら早く呼んだ人が総取り。</p>
+  </div>
+
+  <div class="cast" aria-hidden="true">
+    <img class="c1" src="cast/03.png" alt="" draggable="false">
+    <img class="c2" src="cast/01.png" alt="" draggable="false">
+    <img class="c3" src="cast/02.png" alt="" draggable="false">
+  </div>
+
+  <div class="t-bottom">
+    <p class="tap-hint">タップして スタート</p>
+    <div class="title-foot">
+      <button class="btn ghost" data-sheet="open">あそびかた</button>
+      <button class="btn ghost" id="sound-toggle" aria-pressed="true">音 ON</button>
+    </div>
   </div>
 </section>
 
@@ -938,6 +967,7 @@ function tap(el, fn){
   if (!el) return;
   el.addEventListener("pointerdown", (e) => {
     e.preventDefault();
+    e.stopPropagation();   // タイトルの「画面全体をタップ」に小ボタンが吸われないように
     unlockAudio();
     fn(e);
   }, { passive:false });
@@ -1002,6 +1032,9 @@ document.addEventListener("visibilitychange", () => {
    ============================================================ */
 function go(name){ document.body.dataset.screen = name; }
 $$("[data-go]").forEach(b => tap(b, () => go(b.dataset.go)));
+
+/* タイトルは画面のどこを触っても始まる（小ボタンは stopPropagation で除外済み） */
+tap($("#s-title"), () => { sNext(); go("count"); });
 tap($("[data-sheet='open']"),  () => $("#sheet").classList.add("open"));
 tap($("[data-sheet='close']"), () => $("#sheet").classList.remove("open"));
 $$("[data-scores='close']").forEach(b => tap(b, () => $("#scores").classList.remove("open")));
@@ -1339,13 +1372,21 @@ function finish(){
 tap($("#again"), () => startGame(S.players.map(p => p.name)));
 
 /* ---------- オフライン化 ----------
-   https か localhost のときだけ Service Worker を登録する。
-   file:// や埋め込み表示では何も起きない（登録できない環境で例外を出さない）。 */
-if ("serviceWorker" in navigator &&
-    (location.protocol === "https:" || location.hostname === "localhost")){
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
-  });
+   本番（https）だけ Service Worker を登録する。
+   ローカル開発では登録しない。キャッシュが古いHTMLを返して
+   修正が反映されていないように見える事故を防ぐため。
+   すでに登録済みのものが残っていたら自分で外す。 */
+if ("serviceWorker" in navigator){
+  if (location.protocol === "https:"){
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  } else {
+    navigator.serviceWorker.getRegistrations()
+      .then(rs => rs.forEach(r => r.unregister()))
+      .then(() => caches.keys().then(ks => ks.forEach(k => caches.delete(k))))
+      .catch(() => {});
+  }
 }
 
 /* ---------- 起動 ---------- */
