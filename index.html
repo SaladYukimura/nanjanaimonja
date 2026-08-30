@@ -175,38 +175,53 @@ h1,h2,.big{ font-family:var(--face-display); font-weight:900; letter-spacing:-.0
 #s-title .t-top{ flex:0 0 auto; width:100%; padding-top:7vh; }
 #s-title .eyebrow{ color:#6e7f62; margin-top:16px; }
 
-/* キャスト：箱の表紙のように、下ぞろえで重ねて並べる */
+/* キャスト：箱の表紙のように、下ぞろえで重ねて並べる。
+   画面の端まで使いたいので、左右の余白を無視して 100vw まで広げる
+   （.stage が overflow:hidden なので画面外へはこぼれない）。 */
 .cast{
-  flex:1 1 auto; position:relative; width:100%;
-  min-height:0; align-self:stretch;
-  margin:1vh 0 0;
+  position:absolute; left:0; right:0; bottom:0;
+  height:70%; z-index:1; pointer-events:none;
 }
+#s-title .t-top,
+#s-title .t-bottom{ position:relative; z-index:4; }
+/* 大きさは「幅」ではなく「高さ」で決める。
+   幅基準だと画面の低い端末（SEなど）で絵がロゴまで伸び上がって重なるため。
+   高さ基準なら、余った縦幅ぶんだけ自動で大きくなる。 */
 .cast img{
-  position:absolute; bottom:0; height:auto;
+  position:absolute; bottom:0; width:auto;
   filter:drop-shadow(0 10px 14px #4a55361f);
   -webkit-user-drag:none; user-select:none;
 }
-/* 外側2体を大きく、中央のオレンジだけ小柄にして手前に立たせる */
-.cast .c1{ left:-13%;  width:72%; z-index:1; transform:rotate(-5deg); }
-.cast .c2{ right:-15%; width:76%; z-index:1; transform:rotate(4deg); }
-.cast .c3{ left:50%;   width:48%; z-index:3; bottom:-1%; transform:translateX(-50%) rotate(-2deg); }
+/* 外側2体は縦をいっぱいに使い、中央のオレンジだけ小柄にして手前に立たせる。
+   左右は画面外にはみ出させて、端まで詰まって見えるようにする。 */
+.cast .c1{ left:-22%;  height:100%; z-index:1; transform:rotate(-5deg); }
+.cast .c2{ right:-24%; height:100%; z-index:1; transform:rotate(4deg); }
+.cast .c3{ left:50%;   height:71%;  z-index:3; transform:translateX(-50%) rotate(-2deg); }
 
 #s-title .t-bottom{ flex:0 0 auto; width:100%; padding-top:6px; }
+/* 絵の足元にかかる淡いかすみ。文字とボタンの下地を作りつつ、絵は透かして見せる */
+#s-title .t-bottom::before{
+  content:""; position:absolute; z-index:-1; pointer-events:none;
+  left:-50vw; right:-50vw; top:-30px; bottom:-60px;
+  background:linear-gradient(to bottom,
+    #eef4e000 0%, #eef4e0a6 34%, #ecf2dbe6 66%, #eaf0d8 100%);
+}
 .tap-hint{
   position:relative; z-index:4;
   font-family:var(--face-display); font-weight:400;
   font-size:clamp(16px,4.6vw,19px); color:#31432f;
   margin-bottom:14px; letter-spacing:.02em;
-  text-shadow:0 1px 0 #ffffffb3, 0 0 12px #f7fae9cc;
+  text-shadow:0 1px 0 #fff, 0 0 6px #fbf9edf2, 0 0 16px #fbf9edf2, 0 0 26px #fbf9edd9;
   animation: tapPulse 1.7s ease-in-out infinite;
 }
 @keyframes tapPulse{ 0%,100%{ opacity:.62 } 50%{ opacity:1 } }
 
-/* 明るい地に合わせた小ボタン */
+/* 絵の上に重なるので、下地を効かせて確実に読めるようにする */
 #s-title .btn.ghost{
-  color:#4e5f4a; border-color:#c3cdae; background:#ffffff8c;
+  color:#3f5142; border-color:#ffffff; background:#fbf9edeb;
+  box-shadow:0 2px 10px #4a55361f;
 }
-#s-title .btn.ghost:active{ background:#ffffffd9; }
+#s-title .btn.ghost:active{ background:#fff; }
 
 /* ---------- ロゴ ----------
    書体「マルデコ」の字形をパスに変換して埋め込んだもの（scratchpad/makelogo.py で生成）。

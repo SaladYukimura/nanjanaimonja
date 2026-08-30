@@ -2,7 +2,7 @@
    カード画像まで含めて最初の1回で全部キャッシュするので、
    2回目以降は電波が無くても起動する。
    絵柄やコードを更新したら CACHE の番号を上げること。 */
-const CACHE = "nanjanaimonja-v7";
+const CACHE = "nanjanaimonja-v8";
 
 const ASSETS = [
   "./",
